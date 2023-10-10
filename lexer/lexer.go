@@ -61,10 +61,9 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) makeTwoCharToken() token.Token {
 	ch := l.ch
-	nxCh := l.peekChar();
 	l.readChar()
 
-	tok := string(ch) + string(nxCh)
+	tok := string(ch) + string(l.ch)
 
 	switch tok{
 	case token.EQ : return token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
