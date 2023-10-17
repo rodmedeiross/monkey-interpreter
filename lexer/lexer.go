@@ -59,23 +59,23 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l *Lexer) makeTwoCharToken() token.Token {
+func (l *Lexer) makeTwoCharToken() *token.Token {
 	ch := l.ch
 	l.readChar()
 
 	tok := string(ch) + string(l.ch)
 
 	switch tok{
-	case token.EQ : return token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
-	case token.NOT_EQ : return token.Token{ Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
+	case token.EQ : return &token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
+	case token.NOT_EQ : return &token.Token{ Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
 	}
 
-	return token.Token{Type: token.ILLEGAL, Literal: tok}
+	return &token.Token{Type: token.ILLEGAL, Literal: string(tok)}
 }
 
 
-func (l *Lexer) NextToken() token.Token {
-	var tok token.Token
+func (l *Lexer) NextToken() *token.Token {
+	tok := &token.Token{}
 
 	l.skipWhitespace()
 
@@ -141,8 +141,8 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{
+func newToken(tokenType token.TokenType, ch byte) *token.Token {
+	return &token.Token{
 		Type:    tokenType,
 		Literal: string(ch),
 	}
