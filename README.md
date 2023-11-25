@@ -4,7 +4,7 @@
 <h1 align="center">
   Yet Another Intepreter of Monkey Language in GO BTW <img src="https://interpreterbook.com/img/monkey_logo-d5171d15.png" width="35" />!
 </h1>
-A Mokey Language interpreter with some based in book "Writing An Interpreter In Go - Ball, Thorsten"
+    A Mokey Language interpreter with some based in book "Writing An Interpreter In Go - Ball, Thorsten"
 ## 🚀 About the book
 - **[Writing An Interpreter In Go](https://interpreterbook.com).**
 ## :coffee: Credits
