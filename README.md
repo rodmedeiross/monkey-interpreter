@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://octodex.github.com/images/topguntocat.png" width="400" />
+    <img src="https://github.com/marcusolsson/gophers/blob/master/gopherdata-gopher.png" width="400" />
 </p>
 <h1 align="center">
   Yet Another Intepreter of Monkey Language in GO BTW <img src="https://interpreterbook.com/img/monkey_logo-d5171d15.png" width="35" />!
