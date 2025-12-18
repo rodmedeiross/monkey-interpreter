@@ -65,14 +65,15 @@ func (l *Lexer) makeTwoCharToken() *token.Token {
 
 	tok := string(ch) + string(l.ch)
 
-	switch tok{
-	case token.EQ : return &token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
-	case token.NOT_EQ : return &token.Token{ Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
+	switch tok {
+	case token.EQ:
+		return &token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
+	case token.NOT_EQ:
+		return &token.Token{Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
 	}
 
 	return &token.Token{Type: token.ILLEGAL, Literal: string(tok)}
 }
-
 
 func (l *Lexer) NextToken() *token.Token {
 	tok := &token.Token{}
@@ -84,7 +85,7 @@ func (l *Lexer) NextToken() *token.Token {
 		if l.peekChar() == '=' {
 			tok = l.makeTwoCharToken()
 		} else {
-		tok = newToken(token.ASSIGN, l.ch)
+			tok = newToken(token.ASSIGN, l.ch)
 		}
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
@@ -105,7 +106,7 @@ func (l *Lexer) NextToken() *token.Token {
 	case '-':
 		tok = newToken(token.MINUS, l.ch)
 	case '!':
-		if l.peekChar() == '='{
+		if l.peekChar() == '=' {
 			tok = l.makeTwoCharToken()
 		} else {
 			tok = newToken(token.BANG, l.ch)
