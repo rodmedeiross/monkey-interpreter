@@ -33,23 +33,28 @@ func (p *Parser) nextToken() {
 
 func (p *Parser) ParserProgram() *ast.Program {
 	program := &ast.Program{}
+	program.Statements = []ast.Statement{}
 
 	for p.currToken.Type != token.EOF {
-		var statement ast.Statement
-
-		switch p.currToken.Type {
-		case token.LET:
-			statement = p.parseLetStatement()
-		default:
-			break
-		}
+		statement := p.parseStatement()
 
 		if statement != nil {
 			program.Statements = append(program.Statements, statement)
 		}
+
+		p.nextToken()
 	}
 
 	return program
+}
+
+func (p *Parser) parseStatement() ast.Statement {
+	switch p.currToken.Type {
+	case token.LET:
+		return p.parseLetStatement()
+	default:
+		return nil
+	}
 }
 
 func (p *Parser) parseLetStatement() ast.Statement {
@@ -57,26 +62,31 @@ func (p *Parser) parseLetStatement() ast.Statement {
 		Token: *p.currToken,
 	}
 
+	if !p.peektokenIs(token.IDENT) {
+		return nil
+	}
+
 	p.nextToken()
 	// let x = 5;
 	//     ^ ^
 
 	letStatement.Name = p.parseIdentifier()
-	p.nextToken()
-	// let x = 5;
-	//       ^ ^
 
-	if p.currToken.Type != token.ASSIGN {
-		err := fmt.Sprintf("[ERROR] - Faild to parse '%v' statement. Expect '%v' but got '%v'.", token.LET, token.ASSIGN, p.currToken.Type)
-		panic(err)
-
+	if !p.peektokenIs(token.ASSIGN) {
+		fmt.Printf("[ERROR] - Faild to parse '%v' statement. Expect '%v' but got '%v'.", token.LET, token.ASSIGN, p.currToken.Type)
+		return nil
 	}
 
 	p.nextToken()
 	// let x = 5;
-	//         ^^
+	//       ^ ^
 
-	letStatement.Value = p.parseExpression()
+	for !p.currTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	// TODO - Parse Expression after
+	//letStatement.Value = p.parseExpression()
 
 	return letStatement
 }
@@ -91,7 +101,10 @@ func (p *Parser) parseIdentifier() *ast.Identifier {
 func (p *Parser) parseExpression() ast.Expression {
 	switch p.currToken.Type {
 	case token.INT:
-		if p.peekToken.Type == token.PLUS || p.peekToken.Type == token.MINUS || p.peekToken.Type == token.ASTERISK || p.peekToken.Type == token.SLASH {
+		if p.peektokenIs(token.PLUS) ||
+			p.peektokenIs(token.MINUS) ||
+			p.peektokenIs(token.ASTERISK) ||
+			p.peektokenIs(token.SLASH) {
 			return p.parseNumericExpression()
 		}
 	}
@@ -113,5 +126,12 @@ func (p *Parser) parseNumericExpression() ast.Expression {
 		Operator: *p.currToken,
 		Right:    p.parseLiteral(),
 	}
+}
 
+func (p *Parser) peektokenIs(token token.TokenType) bool {
+	return p.peekToken.Type == token
+}
+
+func (p *Parser) currTokenIs(token token.TokenType) bool {
+	return p.currToken.Type == token
 }
