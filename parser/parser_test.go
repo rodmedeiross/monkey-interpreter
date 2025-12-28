@@ -17,6 +17,7 @@ let feed = 988;
 	parser := New(lexer)
 
 	program := parser.ParserProgram()
+	checkParserErros(t, parser)
 
 	if program == nil {
 		t.Fatal("ParserProgram() returned nil")
@@ -42,6 +43,23 @@ let feed = 988;
 		}
 	}
 
+}
+
+func checkParserErros(t *testing.T, parser *Parser) {
+	errs := parser.Errors()
+
+	if len(errs) == 0 {
+		return
+	}
+
+	pfx := "[ERROR] -"
+
+	t.Errorf("%s parser has %d errors", pfx, len(errs))
+	for _, err := range errs {
+		t.Errorf("%s %s", pfx, err)
+	}
+
+	t.FailNow()
 }
 
 func testLetStatement(t *testing.T, statement ast.Statement, testCase string) bool {

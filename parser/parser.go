@@ -156,6 +156,6 @@ func (p *Parser) expectedToken(token token.TokenType) bool {
 }
 
 func (p *Parser) peekError(token token.TokenType) {
-	msg := fmt.Sprintf("[ERROR] - Failed to parse statement. Expect '%v', got '%v'", token, p.peekToken.Type)
+	msg := fmt.Sprintf("[PARSER] - Failed to parse statement. Expect '%v', got '%v'", token, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }
