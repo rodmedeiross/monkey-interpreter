@@ -12,10 +12,14 @@ type Parser struct {
 	lexer     *lexer.Lexer
 	currToken *token.Token
 	peekToken *token.Token
+	errors    []string
 }
 
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{lexer: l}
+	p := &Parser{
+		lexer:  l,
+		errors: []string{},
+	}
 
 	p.nextToken()
 	p.nextToken()
@@ -24,6 +28,10 @@ func New(l *lexer.Lexer) *Parser {
 	//   ^ ^
 
 	return p
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
 }
 
 func (p *Parser) nextToken() {
@@ -62,22 +70,23 @@ func (p *Parser) parseLetStatement() ast.Statement {
 		Token: *p.currToken,
 	}
 
-	if !p.peektokenIs(token.IDENT) {
+	if !p.expectedToken(token.IDENT) {
 		return nil
 	}
 
-	p.nextToken()
+	// I've been doing it on expectedToken()
+	//p.nextToken()
 	// let x = 5;
 	//     ^ ^
 
 	letStatement.Name = p.parseIdentifier()
 
-	if !p.peektokenIs(token.ASSIGN) {
-		fmt.Printf("[ERROR] - Faild to parse '%v' statement. Expect '%v' but got '%v'.", token.LET, token.ASSIGN, p.currToken.Type)
+	if !p.expectedToken(token.ASSIGN) {
 		return nil
 	}
 
-	p.nextToken()
+	// I've been doing it on expectedToken()
+	//p.nextToken()
 	// let x = 5;
 	//       ^ ^
 
@@ -134,4 +143,19 @@ func (p *Parser) peektokenIs(token token.TokenType) bool {
 
 func (p *Parser) currTokenIs(token token.TokenType) bool {
 	return p.currToken.Type == token
+}
+
+func (p *Parser) expectedToken(token token.TokenType) bool {
+	if p.peektokenIs(token) {
+		p.nextToken()
+		return true
+	} else {
+		p.peekError(token)
+		return false
+	}
+}
+
+func (p *Parser) peekError(token token.TokenType) {
+	msg := fmt.Sprintf("[ERROR] - Failed to parse statement. Expect '%v', got '%v'", token, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
 }
