@@ -53,14 +53,25 @@ func (i *Identifier) TokenLiteral() string {
 
 func (i *Identifier) expressionNode() {}
 
-type NumericExpression struct {
+type ComplexExpression struct {
 	Left     Expression
 	Operator token.Token
 	Right    Expression
 }
 
-func (ne *NumericExpression) TokenLiteral() string {
+func (ne *ComplexExpression) TokenLiteral() string {
 	return ne.Operator.Literal
 }
 
-func (ne *NumericExpression) expressionNode() {}
+func (ne *ComplexExpression) expressionNode() {}
+
+type SimpleExpression struct {
+	Token token.Token
+	Value string
+}
+
+func (se *SimpleExpression) TokenLiteral() string {
+	return se.Token.Literal
+}
+
+func (se *SimpleExpression) expressionNode() {}

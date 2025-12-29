@@ -90,12 +90,15 @@ func (p *Parser) parseLetStatement() ast.Statement {
 	// let x = 5;
 	//       ^ ^
 
-	for !p.currTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
+	// for !p.currTokenIs(token.SEMICOLON) {
+	// 	p.nextToken()
+	// }
 
-	// TODO - Parse Expression after
-	//letStatement.Value = p.parseExpression()
+	letStatement.Value = p.parseExpression()
+
+	if !p.expectedToken(token.SEMICOLON) {
+		return nil
+	}
 
 	return letStatement
 }
@@ -108,31 +111,35 @@ func (p *Parser) parseIdentifier() *ast.Identifier {
 }
 
 func (p *Parser) parseExpression() ast.Expression {
-	switch p.currToken.Type {
+	switch p.peekToken.Type {
 	case token.INT:
-		if p.peektokenIs(token.PLUS) ||
-			p.peektokenIs(token.MINUS) ||
-			p.peektokenIs(token.ASTERISK) ||
-			p.peektokenIs(token.SLASH) {
+		if p.isArithmeticToken() {
 			return p.parseNumericExpression()
+		} else if p.expectedToken(token.INT) {
+			intTok := &ast.SimpleExpression{
+				Token: *p.currToken,
+				Value: p.currToken.Literal,
+			}
+
+			return intTok
 		}
 	}
 	return nil
 }
 
 func (p *Parser) parseLiteral() ast.Expression {
-	p.nextToken()
 	// let x = 5;
 	//          ^^
 	return nil
 }
 
 func (p *Parser) parseNumericExpression() ast.Expression {
+	operator := *p.peekToken
 
-	return &ast.NumericExpression{
+	return &ast.ComplexExpression{
 		// TODO Should I change this to parse INT Expression?
 		Left:     p.parseLiteral(),
-		Operator: *p.currToken,
+		Operator: operator,
 		Right:    p.parseLiteral(),
 	}
 }
@@ -143,6 +150,13 @@ func (p *Parser) peektokenIs(token token.TokenType) bool {
 
 func (p *Parser) currTokenIs(token token.TokenType) bool {
 	return p.currToken.Type == token
+}
+
+func (p *Parser) isArithmeticToken() bool {
+	return p.peektokenIs(token.PLUS) ||
+		p.peektokenIs(token.MINUS) ||
+		p.peektokenIs(token.ASTERISK) ||
+		p.peektokenIs(token.SLASH)
 }
 
 func (p *Parser) expectedToken(token token.TokenType) bool {

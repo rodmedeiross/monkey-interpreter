@@ -30,15 +30,16 @@ let feed = 988;
 
 	tests := []struct {
 		expectedIdentifier string
+		expectedValue      string
 	}{
-		{"x"},
-		{"buzz"},
-		{"feed"},
+		{"x", "43"},
+		{"buzz", "3242"},
+		{"feed", "988"},
 	}
 
 	for i, tt := range tests {
 		stmt := program.Statements[i]
-		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+		if !testLetStatement(t, stmt, tt.expectedIdentifier, tt.expectedValue) {
 			return
 		}
 	}
@@ -62,7 +63,7 @@ func checkParserErros(t *testing.T, parser *Parser) {
 	t.FailNow()
 }
 
-func testLetStatement(t *testing.T, statement ast.Statement, testCase string) bool {
+func testLetStatement(t *testing.T, statement ast.Statement, identifier, value string) bool {
 
 	if statement.TokenLiteral() != "let" {
 		t.Errorf("Expected token='let', got='%s'", statement.TokenLiteral())
@@ -76,14 +77,18 @@ func testLetStatement(t *testing.T, statement ast.Statement, testCase string) bo
 		return false
 	}
 
-	if letStmt.Name.Value != testCase {
-		t.Errorf("letStmt.Name.Value not '%s', got='%s'", testCase, letStmt.Name.Value)
+	if letStmt.Name.Value != identifier {
+		t.Errorf("letStmt.Name.Value not '%s', got='%s'", identifier, letStmt.Name.Value)
 		return false
 	}
 
-	if letStmt.Name.TokenLiteral() != testCase {
-		t.Errorf("letStmt.Name.TokenLiteral() not '%s', got='%s'", testCase, letStmt.Name.TokenLiteral())
+	if letStmt.Name.TokenLiteral() != identifier {
+		t.Errorf("letStmt.Name.TokenLiteral() not '%s', got='%s'", identifier, letStmt.Name.TokenLiteral())
 		return false
+	}
+
+	if letStmt.Value.TokenLiteral() != value {
+		t.Errorf("letStmt.Value not '%s', got='%s'", value, letStmt.Value)
 	}
 
 	return true
