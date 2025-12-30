@@ -1,10 +1,13 @@
 package ast
 
 import (
+	"bytes"
+
 	"github.com/rodmedeiross/monkey-interpreter/token"
 )
 
 type Node interface {
+	String() string
 	TokenLiteral() string
 }
 
@@ -30,6 +33,16 @@ func (p *Program) TokenLiteral() string {
 	}
 }
 
+func (p *Program) String() string {
+	var out bytes.Buffer
+
+	for _, stmt := range p.Statements {
+		out.WriteString(stmt.String())
+	}
+
+	return out.String()
+}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -42,6 +55,21 @@ func (ls *LetStatement) TokenLiteral() string {
 
 func (ls *LetStatement) statementNode() {}
 
+func (ls *LetStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ls.TokenLiteral() + " ")
+	out.WriteString(ls.Name.String() + " = ")
+
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+
+	out.WriteString(";")
+
+	return out.String()
+}
+
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -53,25 +81,48 @@ func (i *Identifier) TokenLiteral() string {
 
 func (i *Identifier) expressionNode() {}
 
-type ComplexExpression struct {
-	Left     Expression
-	Operator token.Token
-	Right    Expression
+func (i *Identifier) String() string {
+	return i.Value
 }
 
-func (ne *ComplexExpression) TokenLiteral() string {
-	return ne.Operator.Literal
-}
-
-func (ne *ComplexExpression) expressionNode() {}
-
-type SimpleExpression struct {
+type ReturnStatement struct {
 	Token token.Token
-	Value string
+	Value Expression
 }
 
-func (se *SimpleExpression) TokenLiteral() string {
-	return se.Token.Literal
+func (rs *ReturnStatement) TokenLiteral() string {
+	return rs.Token.Literal
 }
 
-func (se *SimpleExpression) expressionNode() {}
+func (rs *ReturnStatement) statementNode() {}
+
+func (rs *ReturnStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(rs.TokenLiteral() + " ")
+
+	if rs.Value != nil {
+		out.WriteString(rs.Value.String())
+	}
+
+	out.WriteString(";")
+
+	return out.String()
+}
+
+type ExpressionStatement struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (es *ExpressionStatement) statementNode() {}
+
+func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
+
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+
+	return ""
+}
