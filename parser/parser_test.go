@@ -110,6 +110,40 @@ func TestParsingIdentifierExpression(t *testing.T) {
 	}
 }
 
+func TestParsingIntegerExpression(t *testing.T) {
+	input := "5;"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	identifier, ok := expression.Expression.(*ast.IntegerExpression)
+
+	if !ok {
+		t.Errorf("ExpressionStatement.Expression is not *ast.IntegerExpression, got=%T", expression.Expression)
+	}
+
+	if identifier.Value != 5 {
+		t.Errorf("identifier.Value is not %d, got=%q", 5, identifier.Value)
+	}
+
+	if identifier.TokenLiteral() != "5" {
+		t.Errorf("identifier.Value is not %q, got=%q", "5", identifier.TokenLiteral())
+	}
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 

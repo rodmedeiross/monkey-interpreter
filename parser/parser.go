@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/rodmedeiross/monkey-interpreter/ast"
 	"github.com/rodmedeiross/monkey-interpreter/lexer"
@@ -42,6 +43,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParserFns = make(map[token.TokenType]prefixParserFn)
 	p.addPrefixFn(token.IDENT, p.parseIdentifier)
+	p.addPrefixFn(token.INT, p.parseInteger)
 
 	p.nextToken()
 	p.nextToken()
@@ -70,6 +72,19 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{
 		Token: *p.currToken,
 		Value: p.currToken.Literal,
+	}
+}
+
+func (p *Parser) parseInteger() ast.Expression {
+	intLiteral, err := strconv.ParseInt(p.currToken.Literal, 10, 64)
+
+	if err != nil {
+		return nil
+	}
+
+	return &ast.IntegerExpression{
+		Token: *p.currToken,
+		Value: intLiteral,
 	}
 }
 
