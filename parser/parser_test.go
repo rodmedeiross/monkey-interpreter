@@ -65,7 +65,7 @@ return 993322;
 		returnStmt, ok := statement.(*ast.ReturnStatement)
 
 		if !ok {
-			t.Errorf("statement os not *ast.ReturnStatement, got=%T", statement)
+			t.Errorf("statement is not *ast.ReturnStatement, got=%T", statement)
 			continue
 		}
 
@@ -74,6 +74,40 @@ return 993322;
 		}
 	}
 
+}
+
+func TestParsingIdentifierExpression(t *testing.T) {
+	input := "foobar;"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	identifier, ok := expression.Expression.(*ast.Identifier)
+
+	if !ok {
+		t.Errorf("ExpressionStatement.Expression is not *ast.Identifier, got=%T", expression.Expression)
+	}
+
+	if identifier.Value != "foobar" {
+		t.Errorf("identifier.Value is not %q, got=%q", "foobar", identifier.Value)
+	}
+
+	if identifier.TokenLiteral() != "foobar" {
+		t.Errorf("identifier.Value is not %q, got=%q", "foobar", identifier.TokenLiteral())
+	}
 }
 
 func checkParserErros(t *testing.T, parser *Parser) {
