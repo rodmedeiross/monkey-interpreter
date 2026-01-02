@@ -44,6 +44,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParserFns = make(map[token.TokenType]prefixParserFn)
 	p.addPrefixFn(token.IDENT, p.parseIdentifier)
 	p.addPrefixFn(token.INT, p.parseInteger)
+	p.addPrefixFn(token.BANG, p.parsePrefix)
+	p.addPrefixFn(token.MINUS, p.parsePrefix)
 
 	p.nextToken()
 	p.nextToken()
@@ -79,6 +81,8 @@ func (p *Parser) parseInteger() ast.Expression {
 	intLiteral, err := strconv.ParseInt(p.currToken.Literal, 10, 64)
 
 	if err != nil {
+		msg := fmt.Sprintf("Failed to convert %q into an integer", intLiteral)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 
@@ -86,6 +90,20 @@ func (p *Parser) parseInteger() ast.Expression {
 		Token: *p.currToken,
 		Value: intLiteral,
 	}
+}
+
+func (p *Parser) parsePrefix() ast.Expression {
+	prefixExpression := &ast.PrefixExpression{
+		Token: *p.currToken,
+	}
+
+	prefixExpression.Operator = p.currToken.Literal
+
+	p.nextToken()
+
+	prefixExpression.Right = p.parseExpression(PREFIX)
+
+	return prefixExpression
 }
 
 func (p *Parser) ParserProgram() *ast.Program {
@@ -166,6 +184,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParserFns[p.currToken.Type]
 
 	if prefix == nil {
+		msg := fmt.Sprintf("a parser function for %q not found", p.currToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 
@@ -191,6 +211,6 @@ func (p *Parser) expectedToken(token token.TokenType) bool {
 }
 
 func (p *Parser) peekError(token token.TokenType) {
-	msg := fmt.Sprintf("[PARSER] - Failed to parse statement. Expect '%v', got '%v'", token, p.peekToken.Type)
+	msg := fmt.Sprintf("[PARSER] - Failed to parse %q, got=%q", token, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/rodmedeiross/monkey-interpreter/ast"
@@ -129,18 +130,51 @@ func TestParsingIntegerExpression(t *testing.T) {
 		t.Errorf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
 	}
 
-	identifier, ok := expression.Expression.(*ast.IntegerExpression)
+	if !testIntegerExpression(t, 5, expression.Expression) {
+		return
+	}
+}
 
-	if !ok {
-		t.Errorf("ExpressionStatement.Expression is not *ast.IntegerExpression, got=%T", expression.Expression)
+func TestParsingPrefixExpression(t *testing.T) {
+	prefixTests := []struct {
+		input             string
+		operator          string
+		integerExpression int64
+	}{
+		{"!5", "!", 5},
+		{"-12", "-", 12},
 	}
 
-	if identifier.Value != 5 {
-		t.Errorf("identifier.Value is not %d, got=%q", 5, identifier.Value)
-	}
+	for _, pt := range prefixTests {
+		lexer := lexer.New(pt.input)
+		parser := New(lexer)
 
-	if identifier.TokenLiteral() != "5" {
-		t.Errorf("identifier.Value is not %q, got=%q", "5", identifier.TokenLiteral())
+		program := parser.ParserProgram()
+		checkParserErros(t, parser)
+
+		if len(program.Statements) != 1 {
+			t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+		if !ok {
+			t.Errorf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		expression, ok := stmt.Expression.(*ast.PrefixExpression)
+
+		if !ok {
+			t.Errorf("stmt.Expression is not *ast.PrefixExpression, got=%T", stmt.Expression)
+		}
+
+		if pt.operator != expression.Operator {
+			t.Errorf("expression.Operator is not %q, got=%q", pt.operator, expression.Operator)
+		}
+
+		if !testIntegerExpression(t, pt.integerExpression, expression.Right) {
+			return
+		}
 	}
 }
 
@@ -182,6 +216,29 @@ func testLetStatement(t *testing.T, statement ast.Statement, identifier string) 
 
 	if letStmt.Name.TokenLiteral() != identifier {
 		t.Errorf("letStmt.Name.TokenLiteral() not %q, got=%q", identifier, letStmt.Name.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
+func testIntegerExpression(t *testing.T, testIntegerValue int64, expression ast.Expression) bool {
+
+	integer, ok := expression.(*ast.IntegerExpression)
+
+	if !ok {
+		t.Errorf("ExpressionStatement.Expression is not *ast.IntegerExpression, got=%T", expression)
+		return false
+	}
+
+	if integer.Value != testIntegerValue {
+		t.Errorf("identifier.Value is not %d, got=%q", testIntegerValue, integer.Value)
+		return false
+
+	}
+
+	if integer.TokenLiteral() != fmt.Sprintf("%d", testIntegerValue) {
+		t.Errorf("identifier.Value is not %q, got=%q", fmt.Sprintf("%d", testIntegerValue), integer.TokenLiteral())
 		return false
 	}
 
