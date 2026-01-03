@@ -178,6 +178,78 @@ func TestParsingPrefixExpression(t *testing.T) {
 	}
 }
 
+func TestParsingInfixExpression(t *testing.T) {
+	infixTests := []struct {
+		input           string
+		leftExpression  int64
+		operator        string
+		rightExpression int64
+	}{
+		{"5 + 5", 5, "+", 5},
+		{"5 - 5", 5, "-", 5},
+		{"5 * 5", 5, "*", 5},
+		{"5 / 5", 5, "/", 5},
+	}
+
+	for _, it := range infixTests {
+		lexer := lexer.New(it.input)
+		parser := New(lexer)
+		program := parser.ParserProgram()
+		checkParserErros(t, parser)
+
+		if len(program.Statements) != 1 {
+			t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+		}
+
+		expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+		if !ok {
+			t.Errorf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+		}
+
+		infixExpress, ok := expression.Expression.(*ast.InfixExpression)
+
+		if !ok {
+			t.Errorf("expression.Expression is not *ast.InfixExpression, got=%T", expression.Expression)
+		}
+
+		if !testIntegerExpression(t, it.leftExpression, infixExpress.Left) {
+			return
+		}
+
+		if infixExpress.Operator != it.operator {
+			t.Errorf("infixExpress.Operator is not %q, got=%q", it.operator, infixExpress.Operator)
+		}
+
+		if !testIntegerExpression(t, it.rightExpression, infixExpress.Right) {
+			return
+		}
+	}
+}
+
+func TestParsingOperatorPrecedence(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"-a * b", "((-a) * b)"},
+		{"!-a", "(!(-a))"},
+	}
+
+	for _, tt := range tests {
+		lexer := lexer.New(tt.input)
+		parser := New(lexer)
+		program := parser.ParserProgram()
+		checkParserErros(t, parser)
+
+		actual := program.String()
+
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 
