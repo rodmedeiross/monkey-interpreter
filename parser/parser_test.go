@@ -234,6 +234,7 @@ func TestParsingOperatorPrecedence(t *testing.T) {
 	}{
 		{"-a * b", "((-a) * b)"},
 		{"!-a", "(!(-a))"},
+		{"!-1", "(!(-1))"},
 	}
 
 	for _, tt := range tests {
