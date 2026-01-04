@@ -127,12 +127,14 @@ func TestParsingIntegerExpression(t *testing.T) {
 
 func TestParsingPrefixExpression(t *testing.T) {
 	prefixTests := []struct {
-		input             string
-		operator          string
-		integerExpression int64
+		input      string
+		operator   string
+		expression any
 	}{
 		{"!5", "!", 5},
 		{"-12", "-", 12},
+		{"!true", "!", true},
+		{"!false", "!", false},
 	}
 
 	for _, pt := range prefixTests {
@@ -162,7 +164,7 @@ func TestParsingPrefixExpression(t *testing.T) {
 			t.Errorf("expression.Operator is not %q, got=%q", pt.operator, expression.Operator)
 		}
 
-		if !testIntegerExpression(t, pt.integerExpression, expression.Right) {
+		if !testLiteralExpression(t, pt.expression, expression.Right) {
 			return
 		}
 	}
@@ -171,14 +173,17 @@ func TestParsingPrefixExpression(t *testing.T) {
 func TestParsingInfixExpression(t *testing.T) {
 	infixTests := []struct {
 		input           string
-		leftExpression  int64
+		leftExpression  any
 		operator        string
-		rightExpression int64
+		rightExpression any
 	}{
 		{"5 + 5", 5, "+", 5},
 		{"5 - 5", 5, "-", 5},
 		{"5 * 5", 5, "*", 5},
 		{"5 / 5", 5, "/", 5},
+		{"true == true", true, "==", true},
+		{"false == false", false, "==", false},
+		{"true != false", true, "!=", false},
 	}
 
 	for _, it := range infixTests {
@@ -211,6 +216,10 @@ func TestParsingOperatorPrecedence(t *testing.T) {
 		{"-a * b", "((-a) * b)"},
 		{"!-a", "(!(-a))"},
 		{"!-1", "(!(-1))"},
+		{"true", "true"},
+		{"false", "false"},
+		{"3 > 5 == false", "((3 > 5) == false)"},
+		{"3 < 5 == true", "((3 < 5) == true)"},
 	}
 
 	for _, tt := range tests {
@@ -384,10 +393,12 @@ func testBooleanExpression(t *testing.T, booleanValue bool, expression ast.Expre
 
 	if boolExpress.Value != booleanValue {
 		t.Errorf("boolExpress is not %q, got=%q", fmt.Sprintf("%t", booleanValue), fmt.Sprintf("%t", boolExpress.Value))
+		return false
 	}
 
 	if fmt.Sprintf("%t", booleanValue) != boolExpress.TokenLiteral() {
 		t.Errorf("boolExpress.TokenLiteral() is not %q, got=%q", fmt.Sprintf("%t", booleanValue), boolExpress.TokenLiteral())
+		return false
 	}
 
 	return true
