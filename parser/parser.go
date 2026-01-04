@@ -59,6 +59,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.addPrefixFn(token.INT, p.parseInteger)
 	p.addPrefixFn(token.BANG, p.parsePrefix)
 	p.addPrefixFn(token.MINUS, p.parsePrefix)
+	p.addPrefixFn(token.TRUE, p.parseBoolean)
+	p.addPrefixFn(token.FALSE, p.parseBoolean)
 
 	p.addInfixFn(token.EQ, p.parseInfix)
 	p.addInfixFn(token.NOT_EQ, p.parseInfix)
@@ -118,7 +120,7 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 func (p *Parser) parseInteger() ast.Expression {
 	defer untrace(trace("parseInteger"))
-	intLiteral, err := strconv.ParseInt(p.currToken.Literal, 10, 64)
+	intLiteral, err := strconv.ParseInt(p.currToken.Literal, 0, 64)
 
 	if err != nil {
 		msg := fmt.Sprintf("Failed to convert %q into an integer", intLiteral)
@@ -129,6 +131,15 @@ func (p *Parser) parseInteger() ast.Expression {
 	return &ast.IntegerExpression{
 		Token: *p.currToken,
 		Value: intLiteral,
+	}
+}
+
+func (p *Parser) parseBoolean() ast.Expression {
+	defer untrace(trace("parseBoolean"))
+
+	return &ast.BooleanExpression{
+		Token: *p.currToken,
+		Value: p.currTokenIs(token.TRUE),
 	}
 }
 
