@@ -275,6 +275,111 @@ func TestParsingBooleanExpression(t *testing.T) {
 	}
 }
 
+func TestParsingIfExpression(t *testing.T) {
+	input := "if (x < y) { x }"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	ifExpression, ok := expression.Expression.(*ast.IfExpression)
+
+	if !ok {
+		t.Errorf("ifExpression is not *ast.IfExpression, got=%T", expression.Expression)
+	}
+
+	if !testInfixExpression(t, "<", "x", "y", ifExpression.Conditional) {
+		return
+	}
+
+	if len(ifExpression.Consequence.Statements) != 1 {
+		t.Errorf("ifExpression.Consequence.Statements does not contain 1 statement, got=%d", len(ifExpression.Consequence.Statements))
+	}
+
+	consequenceStatement, ok := ifExpression.Consequence.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("ifExpression.Consequence.Statements[0] is not *ast.ExpressionStatement, got=%T", ifExpression.Consequence.Statements[0])
+	}
+
+	if !testIdentifierExpression(t, "x", consequenceStatement.Expression) {
+		return
+	}
+
+	if ifExpression.Alternative != nil {
+		t.Errorf("ifExpression.Alternative was not nil, got=%+v", ifExpression.Alternative)
+	}
+}
+
+func TestParsingIfElseExpression(t *testing.T) {
+	input := "if (x < y) { x } else { y }"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	ifExpression, ok := expression.Expression.(*ast.IfExpression)
+
+	if !ok {
+		t.Errorf("ifExpression is not *ast.IfExpression, got=%T", expression.Expression)
+	}
+
+	if !testInfixExpression(t, "<", "x", "y", ifExpression.Conditional) {
+		return
+	}
+
+	if len(ifExpression.Consequence.Statements) != 1 {
+		t.Errorf("ifExpression.Consequence.Statements does not contain 1 statement, got=%d", len(ifExpression.Consequence.Statements))
+	}
+
+	consequenceStatement, ok := ifExpression.Consequence.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("ifExpression.Consequence.Statements[0] is not *ast.ExpressionStatement, got=%T", ifExpression.Consequence.Statements[0])
+	}
+
+	if !testIdentifierExpression(t, "x", consequenceStatement.Expression) {
+		return
+	}
+
+	if len(ifExpression.Alternative.Statements) != 1 {
+		t.Errorf("ifExpression.Alternative.Statements does not contain 1 statement, got=%d", len(ifExpression.Alternative.Statements))
+	}
+
+	alternativeStatement, ok := ifExpression.Alternative.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Errorf("ifExpression.Consequence.Statements[0] is not *ast.ExpressionStatement, got=%T", ifExpression.Alternative.Statements[0])
+	}
+
+	if !testIdentifierExpression(t, "y", alternativeStatement.Expression) {
+		return
+	}
+
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 
