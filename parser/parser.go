@@ -62,6 +62,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.addPrefixFn(token.TRUE, p.parseBoolean)
 	p.addPrefixFn(token.FALSE, p.parseBoolean)
 	p.addPrefixFn(token.LPAREN, p.parseGroupedExpression)
+	p.addPrefixFn(token.IF, p.parseIfExpression)
 
 	p.addInfixFn(token.EQ, p.parseInfix)
 	p.addInfixFn(token.NOT_EQ, p.parseInfix)
@@ -184,6 +185,60 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	}
 
 	return exp
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	ifExpression := &ast.IfExpression{
+		Token: *p.currToken,
+	}
+
+	if !p.expectedToken(token.LPAREN) {
+		return nil
+	}
+
+	// Why not parse it as a grouped expression? I could, but semantically it would be incorrect.
+	// Lets parse as an InfixExpression
+	p.nextToken()
+	ifExpression.Conditional = p.parseExpression(LOWEST)
+
+	if !p.expectedToken(token.RPAREN) {
+		return nil
+	}
+
+	if !p.expectedToken(token.LBRACE) {
+		return nil
+	}
+
+	ifExpression.Consequence = p.parseBlockStatement()
+
+	if p.peekTokenIs(token.ELSE) {
+		p.nextToken()
+
+		if !p.expectedToken(token.LBRACE) {
+			return nil
+		}
+
+		ifExpression.Alternative = p.parseBlockStatement()
+	}
+
+	return ifExpression
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	blockStatment := &ast.BlockStatement{
+		Token:      *p.currToken, // Should be LBRACE
+		Statements: []ast.Statement{},
+	}
+
+	p.nextToken()
+
+	for !p.currTokenIs(token.RBRACE) && !p.currTokenIs(token.EOF) {
+		stmt := p.parseStatement()
+		blockStatment.Statements = append(blockStatment.Statements, stmt)
+		p.nextToken()
+	}
+
+	return blockStatment
 }
 
 func (p *Parser) ParserProgram() *ast.Program {
