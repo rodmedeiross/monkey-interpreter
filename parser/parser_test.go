@@ -423,6 +423,42 @@ func TestParsingFunctionExpression(t *testing.T) {
 	testInfixExpression(t, "+", "x", "y", bodyStmt.Expression)
 }
 
+func TestParsingFunctionCallExpression(t *testing.T) {
+	input := "add(x,y);"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	callExpression, ok := expression.Expression.(*ast.CallExpression)
+
+	if !ok {
+		t.Fatalf("callExpression is not *ast.CallExpression, got=%T", expression.Expression)
+	}
+
+	if !testIdentifierExpression(t, "add", callExpression.Function) {
+		return
+	}
+
+	if len(callExpression.FunctionCallParameters) != 2 {
+		t.Fatalf("callExpression.FunctionCallParameters has not 2 parameters, got=%d", len(callExpression.FunctionCallParameters))
+	}
+
+	testLiteralExpression(t, "x", callExpression.FunctionCallParameters[0])
+	testLiteralExpression(t, "y", callExpression.FunctionCallParameters[1])
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 
