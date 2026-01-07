@@ -31,15 +31,16 @@ let feed = 988;
 
 	tests := []struct {
 		expectedIdentifier string
+		expectedValue      any
 	}{
-		{"x"},
-		{"buzz"},
-		{"feed"},
+		{"x", 43},
+		{"buzz", 3242},
+		{"feed", 988},
 	}
 
 	for i, tt := range tests {
 		stmt := program.Statements[i]
-		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+		if !testLetStatement(t, stmt, tt.expectedIdentifier, tt.expectedValue) {
 			return
 		}
 	}
@@ -225,6 +226,7 @@ func TestParsingOperatorPrecedence(t *testing.T) {
 		{"2 / (5 + 5)", "(2 / (5 + 5))"},
 		{"-(5 + 5)", "(-(5 + 5))"},
 		{"!(true == true)", "(!(true == true))"},
+		{"add(true == true, fn(x,y){x+y;}, x)", "add((true == true), fn(x, y) (x + y), x)"},
 	}
 
 	for _, tt := range tests {
@@ -476,7 +478,7 @@ func checkParserErros(t *testing.T, parser *Parser) {
 	t.FailNow()
 }
 
-func testLetStatement(t *testing.T, statement ast.Statement, identifier string) bool {
+func testLetStatement(t *testing.T, statement ast.Statement, identifier string, value any) bool {
 
 	if statement.TokenLiteral() != "let" {
 		t.Errorf("Expected token='let', got=%q", statement.TokenLiteral())
@@ -497,6 +499,10 @@ func testLetStatement(t *testing.T, statement ast.Statement, identifier string) 
 
 	if letStmt.Name.TokenLiteral() != identifier {
 		t.Errorf("letStmt.Name.TokenLiteral() not %q, got=%q", identifier, letStmt.Name.TokenLiteral())
+		return false
+	}
+
+	if !testLiteralExpression(t, value, letStmt.Value) {
 		return false
 	}
 
