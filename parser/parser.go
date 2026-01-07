@@ -191,6 +191,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
+	defer untrace(trace("parseIfExpression"))
 	ifExpression := &ast.IfExpression{
 		Token: *p.currToken,
 	}
@@ -228,6 +229,7 @@ func (p *Parser) parseIfExpression() ast.Expression {
 }
 
 func (p *Parser) parseFunctionExpression() ast.Expression {
+	defer untrace(trace("parseFunctionExpression"))
 	funcExpress := &ast.FunctionExpression{
 		Token: *p.currToken,
 	}
@@ -248,6 +250,7 @@ func (p *Parser) parseFunctionExpression() ast.Expression {
 }
 
 func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	defer untrace(trace("parseFunctionParameters"))
 	parameters := []*ast.Identifier{}
 
 	if p.peekTokenIs(token.RPAREN) {
@@ -272,6 +275,7 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 }
 
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	defer untrace(trace("parseBlockStatement"))
 	blockStatment := &ast.BlockStatement{
 		Token:      *p.currToken, // Should be LBRACE
 		Statements: []ast.Statement{},
@@ -289,6 +293,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 }
 
 func (p *Parser) parseFunctionCall(function ast.Expression) ast.Expression {
+	defer untrace(trace("parseFunctionCall"))
 	call := &ast.CallExpression{
 		Token:    *p.currToken,
 		Function: function,
@@ -300,6 +305,7 @@ func (p *Parser) parseFunctionCall(function ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseFunctionCallParameters() []ast.Expression {
+	defer untrace(trace("parseFunctionCallParameters"))
 	parameters := []ast.Expression{}
 
 	if p.peekTokenIs(token.RPAREN) {
@@ -349,6 +355,7 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
+	defer untrace(trace("parseLetStatement"))
 	letStatement := &ast.LetStatement{
 		Token: *p.currToken,
 	}
@@ -375,6 +382,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 }
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	defer untrace(trace("parseReturnStatement"))
 	returnStatement := &ast.ReturnStatement{
 		Token: *p.currToken,
 	}
