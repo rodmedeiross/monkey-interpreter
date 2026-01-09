@@ -26,6 +26,23 @@ func TestIntegerEvaluation(t *testing.T) {
 
 }
 
+func TestBooleanEvaluation(t *testing.T) {
+	test := []struct {
+		input    string
+		expected bool
+	}{
+		{"true", true},
+		{"false", false},
+	}
+
+	for _, tt := range test {
+		evaluated := evalExpr(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+
+	}
+
+}
+
 func evalExpr(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -33,14 +50,34 @@ func evalExpr(input string) object.Object {
 	return Eval(program)
 }
 
-func testIntegerObject(t *testing.T, obj object.Object, expected int64) {
+func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	intObj, ok := obj.(*object.Integer)
 
 	if !ok {
-		t.Fatalf("obj is not *object.Integer, got=%T", intObj)
+		t.Errorf("obj is not *object.Integer,  got=%T (%+v)", intObj, intObj)
+		return false
 	}
 
 	if intObj.Value != expected {
-		t.Fatalf("intObj.Value is not expected %d, go=%d", expected, intObj.Value)
+		t.Errorf("intObj.Value is not expected %d, go=%d", expected, intObj.Value)
+		return false
 	}
+
+	return true
+}
+
+func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
+	boolObj, ok := obj.(*object.Boolean)
+
+	if !ok {
+		t.Errorf("obj is not *object.Boolean,  got=%T (%+v)", boolObj, boolObj)
+		return false
+	}
+
+	if boolObj.Value != expected {
+		t.Errorf("boolObj.Value is not expected %t, go=%t", expected, boolObj.Value)
+		return false
+	}
+
+	return true
 }

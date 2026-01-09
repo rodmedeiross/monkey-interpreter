@@ -5,10 +5,20 @@ import (
 	"github.com/rodmedeiross/monkey-interpreter/object"
 )
 
+var (
+	TRUE  = &object.Boolean{Value: true}
+	FALSE = &object.Boolean{Value: false}
+	NULL  = &object.Null{}
+)
+
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.IntegerExpression:
 		return &object.Integer{
+			Value: node.Value,
+		}
+	case *ast.BooleanExpression:
+		return &object.Boolean{
 			Value: node.Value,
 		}
 	case *ast.Program:
