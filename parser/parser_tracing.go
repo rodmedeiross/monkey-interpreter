@@ -8,6 +8,7 @@ import (
 var traceLevel int = 0
 
 const traceScape string = "\t"
+const isTrace = false
 
 func incTrace() { traceLevel++ }
 func decTrace() { traceLevel-- }
@@ -17,7 +18,9 @@ func escapeTraceLevel() string {
 }
 
 func printTrace(tc string) {
-	fmt.Printf("%s%s\n", escapeTraceLevel(), tc)
+	if isTrace {
+		fmt.Printf("%s%s\n", escapeTraceLevel(), tc)
+	}
 }
 
 func trace(tc string) string {
