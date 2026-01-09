@@ -8,7 +8,6 @@ import (
 	"github.com/rodmedeiross/monkey-interpreter/repl"
 )
 
-
 func main() {
 	user, err := user.Current()
 

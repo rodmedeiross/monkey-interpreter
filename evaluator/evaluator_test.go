@@ -43,6 +43,25 @@ func TestBooleanEvaluation(t *testing.T) {
 
 }
 
+func TestPrefixEvaluation(t *testing.T) {
+	test := []struct {
+		input    string
+		expected bool
+	}{
+		{"!true", false},
+		{"!false", true},
+		{"!!false", false},
+		{"!!true", true},
+		{"!5", false},
+	}
+
+	for _, tt := range test {
+		evaluated := evalExpr(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+
+}
+
 func evalExpr(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
