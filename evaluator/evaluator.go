@@ -37,6 +37,8 @@ func Eval(node ast.Node) object.Object {
 			switch node.Operator {
 			case token.BANG:
 				return evalBangOperator(right)
+			case token.MINUS:
+				return evalNegativeOperator(right)
 			default:
 				return NULL
 			}
@@ -67,5 +69,16 @@ func evalBangOperator(toEval object.Object) object.Object {
 		return TRUE
 	default:
 		return FALSE
+	}
+}
+
+func evalNegativeOperator(toEval object.Object) object.Object {
+	switch v := toEval.(type) {
+	case *object.Integer:
+		return &object.Integer{
+			Value: v.Value * -1,
+		}
+	default:
+		return NULL
 	}
 }
