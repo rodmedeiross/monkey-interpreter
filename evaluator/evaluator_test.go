@@ -16,6 +16,14 @@ func TestIntegerEvaluation(t *testing.T) {
 		{"5", 5},
 		{"10", 10},
 		{"12", 12},
+		{"10 * 10", 100},
+		{"5 + 5", 10},
+		{"6 / 2", 3},
+		{"20 - 5", 15},
+		{"-10 + 15", 5},
+		{"2 * 2 * 2 * 2", 16},
+		{"2 * (2 + 3) / 1", 10},
+		{"10 + 10 + (20 * 5 + (10 -2))", 128},
 	}
 
 	for _, tt := range test {
@@ -33,6 +41,19 @@ func TestBooleanEvaluation(t *testing.T) {
 	}{
 		{"true", true},
 		{"false", false},
+		{"5 > 1", true},
+		{"4 > 8", false},
+		{"1 != 1", false},
+		{"1 != 1", false},
+		{"1 == 2", false},
+		{"1 != 2", true},
+		{"true == true", true},
+		{"true != true", false},
+		{"false != true", true},
+		{"true == false", false},
+		{"false == false", true},
+		{"(1 < 2) == false", false},
+		{"(1 != 1) == false", true},
 	}
 
 	for _, tt := range test {
@@ -59,7 +80,6 @@ func TestPrefixEvaluation(t *testing.T) {
 		evaluated := evalExpr(tt.input)
 		testBooleanObject(t, evaluated, tt.expected)
 	}
-
 }
 
 func evalExpr(input string) object.Object {
@@ -78,7 +98,7 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	}
 
 	if intObj.Value != expected {
-		t.Errorf("intObj.Value is not expected %d, go=%d", expected, intObj.Value)
+		t.Errorf("intObj.Value is not expected %d, got=%d", expected, intObj.Value)
 		return false
 	}
 

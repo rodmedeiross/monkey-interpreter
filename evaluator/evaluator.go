@@ -46,9 +46,51 @@ func Eval(node ast.Node) object.Object {
 
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
+
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
 	}
 
 	return nil
+}
+
+func evalInfixExpression(operator string, left, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return func(operator string, left, right object.Object) object.Object {
+			leftInt := left.(*object.Integer).Value
+			rightInt := right.(*object.Integer).Value
+
+			switch operator {
+			case token.PLUS:
+				return &object.Integer{Value: leftInt + rightInt}
+			case token.MINUS:
+				return &object.Integer{Value: leftInt - rightInt}
+			case token.ASTERISK:
+				return &object.Integer{Value: leftInt * rightInt}
+			case token.SLASH:
+				return &object.Integer{Value: leftInt / rightInt}
+			case token.EQ:
+				return nativeBoolToBooleanObj(leftInt == rightInt)
+			case token.NOT_EQ:
+				return nativeBoolToBooleanObj(leftInt != rightInt)
+			case token.LT:
+				return nativeBoolToBooleanObj(leftInt < rightInt)
+			case token.GT:
+				return nativeBoolToBooleanObj(leftInt > rightInt)
+			default:
+				return NULL
+			}
+		}(operator, left, right)
+	case operator == token.EQ:
+		return nativeBoolToBooleanObj(left == right)
+	case operator == token.NOT_EQ:
+		return nativeBoolToBooleanObj(left != right)
+	default:
+		return NULL
+	}
 }
 
 func nativeBoolToBooleanObj(evaluated bool) *object.Boolean {
@@ -73,12 +115,11 @@ func evalBangOperator(toEval object.Object) object.Object {
 }
 
 func evalNegativeOperator(toEval object.Object) object.Object {
-	switch v := toEval.(type) {
-	case *object.Integer:
-		return &object.Integer{
-			Value: v.Value * -1,
-		}
-	default:
+	if toEval.Type() != object.INTEGER_OBJ {
 		return NULL
 	}
+
+	value := toEval.(*object.Integer).Value
+
+	return &object.Integer{Value: -value}
 }
