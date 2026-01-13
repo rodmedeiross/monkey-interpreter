@@ -20,13 +20,13 @@ func (ie *IfExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("if ")
-	out.WriteString(ie.Conditional.String())
+	out.WriteString("(" + ie.Conditional.String() + ")")
 	out.WriteString(" ")
-	out.WriteString(ie.Consequence.String())
+	out.WriteString("(" + ie.Consequence.String() + ")")
 
 	if ie.Alternative != nil {
-		out.WriteString("else ")
-		out.WriteString(ie.Alternative.String())
+		out.WriteString(" else ")
+		out.WriteString("(" + ie.Alternative.String() + ")")
 	}
 
 	return out.String()

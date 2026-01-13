@@ -25,6 +25,23 @@ func Eval(node ast.Node) object.Object {
 			var obj object.Object
 			for _, stmt := range node.Statements {
 				obj = Eval(stmt)
+
+				if returnObj, ok := obj.(*object.Return); ok {
+					return returnObj.Value
+				}
+			}
+
+			return obj
+		}(node)
+
+	case *ast.ReturnStatement:
+		return &object.Return{Value: Eval(node.Value)}
+
+	case *ast.BlockStatement:
+		return func(node *ast.BlockStatement) object.Object {
+			var obj object.Object
+			for _, stmt := range node.Statements {
+				obj = Eval(stmt)
 			}
 
 			return obj
@@ -51,9 +68,36 @@ func Eval(node ast.Node) object.Object {
 		left := Eval(node.Left)
 		right := Eval(node.Right)
 		return evalInfixExpression(node.Operator, left, right)
+
+	case *ast.IfExpression:
+		return func(node *ast.IfExpression) object.Object {
+			cond := Eval(node.Conditional)
+
+			if truely(cond) {
+				return Eval(node.Consequence)
+			} else if node.Alternative != nil {
+				return Eval(node.Alternative)
+			} else {
+				return NULL
+			}
+
+		}(node)
 	}
 
 	return nil
+}
+
+func truely(cond object.Object) bool {
+	switch cond {
+	case TRUE:
+		return true
+	case FALSE:
+		return false
+	case NULL:
+		return false
+	default:
+		return true
+	}
 }
 
 func evalInfixExpression(operator string, left, right object.Object) object.Object {

@@ -82,6 +82,57 @@ func TestPrefixEvaluation(t *testing.T) {
 	}
 }
 
+func TestIfExpressionEvaluation(t *testing.T) {
+	test := []struct {
+		input    string
+		expected any
+	}{
+		{"if (1 > 2) { 10 }", nil},
+		{"if (1 < 2) { 10 }", 10},
+		{"if (1 > 2) { 10 } else { 5 }", 5},
+		{"if (true) { 10 } else { 5 }", 10},
+		{"if (false) { 10 } else { 5 }", 5},
+	}
+
+	for _, tt := range test {
+		evaluated := evalExpr(tt.input)
+
+		switch ty := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(ty))
+		case int64:
+			testIntegerObject(t, evaluated, ty)
+		case nil:
+			testNullObject(t, evaluated)
+		}
+	}
+}
+
+func TestReturnExpressionEvaluation(t *testing.T) {
+	test := []struct {
+		input    string
+		expected any
+	}{
+		{"return 10;", 10},
+		{"return 12; 2; return 1", 12},
+		{"2; return 2; return 1", 2},
+		{"return 2 * 3 * 4;", 24},
+	}
+
+	for _, tt := range test {
+		evaluated := evalExpr(tt.input)
+
+		switch ty := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(ty))
+		case int64:
+			testIntegerObject(t, evaluated, ty)
+		case nil:
+			testNullObject(t, evaluated)
+		}
+	}
+}
+
 func evalExpr(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -115,6 +166,16 @@ func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 
 	if boolObj.Value != expected {
 		t.Errorf("boolObj.Value is not expected %t, go=%t", expected, boolObj.Value)
+		return false
+	}
+
+	return true
+}
+
+func testNullObject(t *testing.T, obj object.Object) bool {
+
+	if obj != NULL {
+		t.Errorf("object is not NULL, got=%T {%+v}", obj, obj)
 		return false
 	}
 
