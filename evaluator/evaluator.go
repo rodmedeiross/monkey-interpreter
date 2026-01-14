@@ -1,6 +1,8 @@
 package evaluator
 
 import (
+	"fmt"
+
 	"github.com/rodmedeiross/monkey-interpreter/ast"
 	"github.com/rodmedeiross/monkey-interpreter/object"
 	"github.com/rodmedeiross/monkey-interpreter/token"
@@ -26,8 +28,11 @@ func Eval(node ast.Node) object.Object {
 			for _, stmt := range node.Statements {
 				obj = Eval(stmt)
 
-				if returnObj, ok := obj.(*object.Return); ok {
+				switch returnObj := obj.(type) {
+				case *object.Return:
 					return returnObj.Value
+				case *object.Error:
+					return returnObj
 				}
 			}
 
@@ -35,13 +40,28 @@ func Eval(node ast.Node) object.Object {
 		}(node)
 
 	case *ast.ReturnStatement:
-		return &object.Return{Value: Eval(node.Value)}
+		val := Eval(node.Value)
+
+		if isError(val) {
+			return val
+		}
+
+		return &object.Return{Value: val}
 
 	case *ast.BlockStatement:
 		return func(node *ast.BlockStatement) object.Object {
 			var obj object.Object
 			for _, stmt := range node.Statements {
 				obj = Eval(stmt)
+
+				if obj != nil {
+					oty := obj.Type()
+
+					if oty == object.RETURN_OBJ || oty == object.ERROR_OBJ {
+						return obj
+					}
+				}
+
 			}
 
 			return obj
@@ -51,13 +71,17 @@ func Eval(node ast.Node) object.Object {
 		return func(node *ast.PrefixExpression) object.Object {
 			right := Eval(node.Right)
 
+			if isError(right) {
+				return right
+			}
+
 			switch node.Operator {
 			case token.BANG:
 				return evalBangOperator(right)
 			case token.MINUS:
 				return evalNegativeOperator(right)
 			default:
-				return NULL
+				return setError("unknown operator: %s%s", node.Operator, right.Type())
 			}
 		}(node)
 
@@ -66,12 +90,24 @@ func Eval(node ast.Node) object.Object {
 
 	case *ast.InfixExpression:
 		left := Eval(node.Left)
+		if isError(left) {
+			return left
+		}
+
 		right := Eval(node.Right)
+		if isError(right) {
+			return right
+		}
+
 		return evalInfixExpression(node.Operator, left, right)
 
 	case *ast.IfExpression:
 		return func(node *ast.IfExpression) object.Object {
 			cond := Eval(node.Conditional)
+
+			if isError(cond) {
+				return cond
+			}
 
 			if truely(cond) {
 				return Eval(node.Consequence)
@@ -125,15 +161,17 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 			case token.GT:
 				return nativeBoolToBooleanObj(leftInt > rightInt)
 			default:
-				return NULL
+				return setError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 			}
 		}(operator, left, right)
 	case operator == token.EQ:
 		return nativeBoolToBooleanObj(left == right)
 	case operator == token.NOT_EQ:
 		return nativeBoolToBooleanObj(left != right)
+	case left.Type() != right.Type():
+		return setError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	default:
-		return NULL
+		return setError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -160,10 +198,22 @@ func evalBangOperator(toEval object.Object) object.Object {
 
 func evalNegativeOperator(toEval object.Object) object.Object {
 	if toEval.Type() != object.INTEGER_OBJ {
-		return NULL
+		return setError("unknown operator: -%s", toEval.Type())
 	}
 
 	value := toEval.(*object.Integer).Value
 
 	return &object.Integer{Value: -value}
+}
+
+func setError(format string, err ...any) *object.Error {
+	return &object.Error{Message: fmt.Sprintf(format, err...)}
+}
+
+func isError(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.ERROR_OBJ
+	}
+
+	return true
 }

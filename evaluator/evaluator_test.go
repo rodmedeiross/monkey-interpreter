@@ -133,6 +133,37 @@ func TestReturnExpressionEvaluation(t *testing.T) {
 	}
 }
 
+func TestErrorEvaluation(t *testing.T) {
+
+	test := []struct {
+		input string
+		err   string
+	}{
+		{"5 + true;", "type mismatch: INTEGER + BOOLEAN"},
+		{"5 + true; 6;", "type mismatch: INTEGER + BOOLEAN"},
+		{"-true", "unknown operator: -BOOLEAN"},
+		{"true + false", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"if (10 > 1) { if (10 > 1) { return true + false; } return 1; }", "unknown operator: BOOLEAN + BOOLEAN"},
+	}
+
+	for _, tt := range test {
+		evaluated := evalExpr(tt.input)
+
+		obj, ok := evaluated.(*object.Error)
+
+		if !ok {
+			t.Errorf("obj is not *objectError, got=%T(%+v)", evaluated, evaluated)
+			continue
+		}
+
+		if obj.Message != tt.err {
+			t.Errorf("wrong message, expected=%q, got=%q", tt.err, obj.Message)
+		}
+	}
+}
+
 func evalExpr(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
