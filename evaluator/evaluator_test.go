@@ -164,11 +164,30 @@ func TestErrorEvaluation(t *testing.T) {
 	}
 }
 
+func TestLetEvaluation(t *testing.T) {
+	test := []struct {
+		input    string
+		expected int64
+	}{
+		{"let value = (2 * 2 * 2); value;", 8},
+		{"let a = 5 * 5; a;", 25},
+		{"let a = 5; let b = a; b;", 5},
+		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+	}
+
+	for _, tt := range test {
+		evaluated := evalExpr(tt.input)
+
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
 func evalExpr(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParserProgram()
-	return Eval(program)
+	env := object.NewEnvironment()
+	return Eval(program, env)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {

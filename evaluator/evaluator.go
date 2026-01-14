@@ -14,7 +14,7 @@ var (
 	NULL  = &object.Null{}
 )
 
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.IntegerExpression:
 		return &object.Integer{
@@ -26,7 +26,7 @@ func Eval(node ast.Node) object.Object {
 		return func(node *ast.Program) object.Object {
 			var obj object.Object
 			for _, stmt := range node.Statements {
-				obj = Eval(stmt)
+				obj = Eval(stmt, env)
 
 				switch returnObj := obj.(type) {
 				case *object.Return:
@@ -39,8 +39,29 @@ func Eval(node ast.Node) object.Object {
 			return obj
 		}(node)
 
+	case *ast.LetStatement:
+		val := Eval(node.Value, env)
+
+		if isError(val) {
+			return val
+		}
+
+		env.Set(node.Name.Value, val)
+
+	case *ast.Identifier:
+		return func(node *ast.Identifier, env *object.Environment) object.Object {
+			obj, ok := env.Get(node.Value)
+
+			if !ok {
+				return setError("identifier not found: %s", node.Value)
+			}
+
+			return obj
+
+		}(node, env)
+
 	case *ast.ReturnStatement:
-		val := Eval(node.Value)
+		val := Eval(node.Value, env)
 
 		if isError(val) {
 			return val
@@ -52,7 +73,7 @@ func Eval(node ast.Node) object.Object {
 		return func(node *ast.BlockStatement) object.Object {
 			var obj object.Object
 			for _, stmt := range node.Statements {
-				obj = Eval(stmt)
+				obj = Eval(stmt, env)
 
 				if obj != nil {
 					oty := obj.Type()
@@ -69,7 +90,7 @@ func Eval(node ast.Node) object.Object {
 
 	case *ast.PrefixExpression:
 		return func(node *ast.PrefixExpression) object.Object {
-			right := Eval(node.Right)
+			right := Eval(node.Right, env)
 
 			if isError(right) {
 				return right
@@ -86,15 +107,15 @@ func Eval(node ast.Node) object.Object {
 		}(node)
 
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
+		return Eval(node.Expression, env)
 
 	case *ast.InfixExpression:
-		left := Eval(node.Left)
+		left := Eval(node.Left, env)
 		if isError(left) {
 			return left
 		}
 
-		right := Eval(node.Right)
+		right := Eval(node.Right, env)
 		if isError(right) {
 			return right
 		}
@@ -103,16 +124,16 @@ func Eval(node ast.Node) object.Object {
 
 	case *ast.IfExpression:
 		return func(node *ast.IfExpression) object.Object {
-			cond := Eval(node.Conditional)
+			cond := Eval(node.Conditional, env)
 
 			if isError(cond) {
 				return cond
 			}
 
 			if truely(cond) {
-				return Eval(node.Consequence)
+				return Eval(node.Consequence, env)
 			} else if node.Alternative != nil {
-				return Eval(node.Alternative)
+				return Eval(node.Alternative, env)
 			} else {
 				return NULL
 			}
