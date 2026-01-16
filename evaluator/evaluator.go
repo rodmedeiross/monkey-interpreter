@@ -106,6 +106,79 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			}
 		}(node)
 
+	case *ast.FunctionExpression:
+		return &object.Function{
+			Parameters: node.Parameters,
+			Body:       node.Body,
+			Env:        env,
+		}
+
+	case *ast.CallExpression:
+		fn := Eval(node.Function, env)
+
+		if isError(fn) {
+			return fn
+		}
+
+		args := func(params []ast.Expression, env *object.Environment) []object.Object {
+			objs := []object.Object{}
+
+			for _, param := range params {
+				evaluated := Eval(param, env)
+				if isError(evaluated) {
+					return []object.Object{evaluated}
+				}
+
+				objs = append(objs, evaluated)
+			}
+
+			return objs
+
+		}(node.FunctionCallParameters, env)
+
+		if len(args) == 1 && isError(args[0]) {
+			return args[0]
+		}
+
+		fnObj, ok := fn.(*object.Function)
+
+		if !ok {
+			setError("Object %s(%+v) is not a FUNCTION", fn.Type(), fn)
+		}
+
+		// This enables lexical scoping.
+		//
+		// Why use fnObj.Env instead of the current eval env?
+		// Because the environment where a function is *defined* may differ from the
+		// environment where it is *called*, especially with inner functions (closures).
+		//
+		// Example:
+		//   fn(x) {
+		//       let myFun = fn(y) { x + y };
+		//       myFun(2);
+		//   }
+		//
+		// In this case, `myFun` must resolve `x` from the environment captured when it
+		// was defined, not from the call-site environment.
+		// That captured environment is stored in fnObj.Env.
+		wrappedEnv := object.NewWrappedEnvironment(env)
+
+		for idx, paramId := range fnObj.Parameters {
+			wrappedEnv.Set(paramId.Value, args[idx])
+		}
+
+		bodyEval := Eval(fnObj.Body, wrappedEnv)
+
+		if isError(bodyEval) {
+			return bodyEval
+		}
+
+		if bodyEval.Type() == object.RETURN_OBJ {
+			return bodyEval.(*object.Return).Value
+		}
+
+		return bodyEval
+
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
 
