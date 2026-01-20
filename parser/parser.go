@@ -65,6 +65,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.addPrefixFn(token.LPAREN, p.parseGroupedExpression)
 	p.addPrefixFn(token.IF, p.parseIfExpression)
 	p.addPrefixFn(token.FUNCTION, p.parseFunctionExpression)
+	p.addPrefixFn(token.STRING, p.parseStringExpression)
 
 	p.addInfixFn(token.EQ, p.parseInfix)
 	p.addInfixFn(token.NOT_EQ, p.parseInfix)
@@ -439,6 +440,15 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 
 	return leftExpr
+}
+
+func (p *Parser) parseStringExpression() ast.Expression {
+	defer untrace(trace("parserStringExpression"))
+
+	return &ast.StringExpression{
+		Token: *p.currToken,
+		Value: p.currToken.Literal,
+	}
 }
 
 func (p *Parser) peekTokenIs(token token.TokenType) bool {

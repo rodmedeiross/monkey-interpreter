@@ -10,8 +10,8 @@ func TestNextTokenWithSimpleInput(t *testing.T) {
 	input := `=+(){},;:`
 
 	tests := []struct {
-		expectedType     token.TokenType
-		expectedLiteral  string
+		expectedType    token.TokenType
+		expectedLiteral string
 	}{
 		{token.ASSIGN, "="},
 		{token.PLUS, "+"},
@@ -58,11 +58,13 @@ func TestNextTokenWithFunctionInput(t *testing.T) {
 
 	10 == 10;
 	10 != 9;
+	"foobar"
+	"foo bar"
 	`
 
 	tests := []struct {
-		expectedType     token.TokenType
-		expectedLiteral  string
+		expectedType    token.TokenType
+		expectedLiteral string
 	}{
 		{token.LET, "let"},
 		{token.IDENT, "five"},
@@ -138,6 +140,8 @@ func TestNextTokenWithFunctionInput(t *testing.T) {
 		{token.NOT_EQ, "!="},
 		{token.INT, "9"},
 		{token.SEMICOLON, ";"},
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
 		{token.EOF, ""},
 	}
 

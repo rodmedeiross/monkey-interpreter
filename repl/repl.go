@@ -9,6 +9,7 @@ import (
 	"github.com/rodmedeiross/monkey-interpreter/lexer"
 	"github.com/rodmedeiross/monkey-interpreter/object"
 	"github.com/rodmedeiross/monkey-interpreter/parser"
+	// "github.com/rodmedeiross/monkey-interpreter/token"
 )
 
 const PROMPT = ">> "

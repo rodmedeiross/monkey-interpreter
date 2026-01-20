@@ -20,6 +20,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Integer{
 			Value: node.Value,
 		}
+	case *ast.StringExpression:
+		return &object.String{
+			Value: node.Value,
+		}
 	case *ast.BooleanExpression:
 		return nativeBoolToBooleanObj(node.Value)
 	case *ast.Program:
