@@ -461,6 +461,35 @@ func TestParsingFunctionCallExpression(t *testing.T) {
 	testLiteralExpression(t, "y", callExpression.FunctionCallParameters[1])
 }
 
+func TestParsingStringExpression(t *testing.T) {
+	input := `"hello\nword"`
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	stringExpression, ok := expression.Expression.(*ast.StringExpression)
+
+	if !ok {
+		t.Fatalf("expression.Expression is not *ast.StringExpression, got=%T", stringExpression)
+	}
+
+	if stringExpression.Value != "hello\\nword" {
+		t.Fatalf("stringExpression is not %q, got=%q", "hello\\nword", stringExpression.Value)
+	}
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 

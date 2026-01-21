@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/rodmedeiross/monkey-interpreter/lexer"
@@ -219,6 +220,41 @@ func TestFuncCallEvaluation(t *testing.T) {
 
 	for _, tt := range tests {
 		testIntegerObject(t, evalExpr(tt.input), tt.expected)
+	}
+}
+
+func TestStringEvaluation(t *testing.T) {
+	input := `"hello\nworld"`
+
+	evaluated := evalExpr(input)
+
+	str, ok := evaluated.(*object.String)
+
+	if !ok {
+		t.Errorf("evaluated is not *object.String, got=%T (%+v)", evaluated, evaluated)
+	}
+
+	inputEnquoted, _ := strconv.Unquote(input)
+
+	if str.Inspect() != inputEnquoted {
+		t.Errorf("String evaluated is not %q, got=%q", inputEnquoted, str.Inspect())
+	}
+
+}
+
+func TestStringConcatenation(t *testing.T) {
+	input := `"Hello" + " " + "World!"`
+
+	evaluated := evalExpr(input)
+
+	str, ok := evaluated.(*object.String)
+
+	if !ok {
+		t.Errorf("evaluated is not *object.String, got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Inspect() != "Hello World!" {
+		t.Errorf("String evaluated is not %q, got=%q", "Hello World!", str.Value)
 	}
 }
 

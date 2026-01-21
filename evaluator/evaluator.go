@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/rodmedeiross/monkey-interpreter/ast"
 	"github.com/rodmedeiross/monkey-interpreter/object"
@@ -21,8 +22,12 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			Value: node.Value,
 		}
 	case *ast.StringExpression:
+		str, err := strconv.Unquote(`"` + node.Value + `"`)
+		if err != nil {
+			setError("string evaluation error: %s", err)
+		}
 		return &object.String{
-			Value: node.Value,
+			Value: str,
 		}
 	case *ast.BooleanExpression:
 		return nativeBoolToBooleanObj(node.Value)
@@ -262,6 +267,13 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 				return setError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 			}
 		}(operator, left, right)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		if operator != token.PLUS {
+			return setError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
+		}
+		return &object.String{
+			Value: left.Inspect() + right.Inspect(),
+		}
 	case operator == token.EQ:
 		return nativeBoolToBooleanObj(left == right)
 	case operator == token.NOT_EQ:
