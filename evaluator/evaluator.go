@@ -15,6 +15,24 @@ var (
 	NULL  = &object.Null{}
 )
 
+var builtInFunctions = map[string]*object.BuiltIn{
+	"len": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return setError("wrong number of arguments, got=%d, want=1", len(args))
+			}
+
+			switch arg := args[0].(type) {
+			case *object.String:
+				return &object.Integer{Value: int64(len(arg.Value))}
+			default:
+				return setError("arguments to 'len' is not supported, got=%s", arg.Type())
+			}
+
+		},
+	},
+}
+
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.IntegerExpression:
@@ -59,13 +77,15 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.Identifier:
 		return func(node *ast.Identifier, env *object.Environment) object.Object {
-			obj, ok := env.Get(node.Value)
-
-			if !ok {
-				return setError("identifier not found: %s", node.Value)
+			if obj, ok := env.Get(node.Value); ok {
+				return obj
 			}
 
-			return obj
+			if fn, ok := builtInFunctions[node.Value]; ok {
+				return fn
+			}
+
+			return setError("identifier not found: %s", node.Value)
 
 		}(node, env)
 
@@ -149,12 +169,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return args[0]
 		}
 
-		fnObj, ok := fn.(*object.Function)
-
-		if !ok {
-			setError("Object %s(%+v) is not a FUNCTION", fn.Type(), fn)
-		}
-
 		// This enables lexical scoping.
 		//
 		// Why use fnObj.Env instead of the current eval env?
@@ -172,21 +186,29 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		// That captured environment is stored in fnObj.Env.
 		wrappedEnv := object.NewWrappedEnvironment(env)
 
-		for idx, paramId := range fnObj.Parameters {
-			wrappedEnv.Set(paramId.Value, args[idx])
-		}
+		switch fnObj := fn.(type) {
+		case *object.Function:
+			for idx, paramId := range fnObj.Parameters {
+				wrappedEnv.Set(paramId.Value, args[idx])
+			}
 
-		bodyEval := Eval(fnObj.Body, wrappedEnv)
+			bodyEval := Eval(fnObj.Body, wrappedEnv)
 
-		if isError(bodyEval) {
+			if isError(bodyEval) {
+				return bodyEval
+			}
+
+			if bodyEval.Type() == object.RETURN_OBJ {
+				return bodyEval.(*object.Return).Value
+			}
+
 			return bodyEval
-		}
+		case *object.BuiltIn:
+			return fnObj.Fn(args...)
 
-		if bodyEval.Type() == object.RETURN_OBJ {
-			return bodyEval.(*object.Return).Value
+		default:
+			return setError("Object %s(%+v) is not a FUNCTION", fn.Type(), fn)
 		}
-
-		return bodyEval
 
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
@@ -259,6 +281,10 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 				return nativeBoolToBooleanObj(leftInt == rightInt)
 			case token.NOT_EQ:
 				return nativeBoolToBooleanObj(leftInt != rightInt)
+			case token.LT_EQ:
+				return nativeBoolToBooleanObj(leftInt <= rightInt)
+			case token.GT_EQ:
+				return nativeBoolToBooleanObj(leftInt >= rightInt)
 			case token.LT:
 				return nativeBoolToBooleanObj(leftInt < rightInt)
 			case token.GT:

@@ -89,6 +89,10 @@ func (l *Lexer) makeTwoCharToken() *token.Token {
 		return &token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
 	case token.NOT_EQ:
 		return &token.Token{Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
+	case token.LT_EQ:
+		return &token.Token{Type: token.LT_EQ, Literal: tok}
+	case token.GT_EQ:
+		return &token.Token{Type: token.GT_EQ, Literal: tok}
 	}
 
 	return &token.Token{Type: token.ILLEGAL, Literal: string(tok)}
@@ -135,9 +139,17 @@ func (l *Lexer) NextToken() *token.Token {
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
 	case '<':
-		tok = newToken(token.LT, l.ch)
+		if l.peekChar() == '=' {
+			tok = l.makeTwoCharToken()
+		} else {
+			tok = newToken(token.LT_EQ, l.ch)
+		}
 	case '>':
-		tok = newToken(token.GT, l.ch)
+		if l.peekChar() == '=' {
+			tok = l.makeTwoCharToken()
+		} else {
+			tok = newToken(token.GT_EQ, l.ch)
+		}
 	case '#':
 		tok = newToken(token.HASH, l.ch)
 	case '"':

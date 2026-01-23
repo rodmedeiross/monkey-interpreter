@@ -30,6 +30,8 @@ var precedence = map[token.TokenType]int{
 	token.NOT_EQ:   EQUALS,
 	token.LT:       LESSGREATER,
 	token.GT:       LESSGREATER,
+	token.LT_EQ:    LESSGREATER,
+	token.GT_EQ:    LESSGREATER,
 	token.PLUS:     SUM,
 	token.MINUS:    SUM,
 	token.ASTERISK: PRODUCT,
@@ -69,6 +71,8 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.addInfixFn(token.EQ, p.parseInfix)
 	p.addInfixFn(token.NOT_EQ, p.parseInfix)
+	p.addInfixFn(token.LT_EQ, p.parseInfix)
+	p.addInfixFn(token.GT_EQ, p.parseInfix)
 	p.addInfixFn(token.LT, p.parseInfix)
 	p.addInfixFn(token.GT, p.parseInfix)
 	p.addInfixFn(token.PLUS, p.parseInfix)

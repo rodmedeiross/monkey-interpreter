@@ -39,6 +39,8 @@ const (
 	ELSE      = "ELSE"
 	EQ        = "=="
 	NOT_EQ    = "!="
+	GT_EQ     = ">="
+	LT_EQ     = "<="
 	RETURN    = "RETURN"
 	STRING    = "STRING"
 )

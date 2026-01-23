@@ -52,6 +52,10 @@ func TestBooleanEvaluation(t *testing.T) {
 		{"false != true", true},
 		{"true == false", false},
 		{"false == false", true},
+		{"(1 <= 1)", true},
+		{"2 <= 1", false},
+		{"1 >= 1", true},
+		{"2 <= 1", false},
 		{"(1 < 2) == false", false},
 		{"(1 != 1) == false", true},
 	}
@@ -255,6 +259,40 @@ func TestStringConcatenation(t *testing.T) {
 
 	if str.Inspect() != "Hello World!" {
 		t.Errorf("String evaluated is not %q, got=%q", "Hello World!", str.Value)
+	}
+}
+
+func TestLenBuiltFunction(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{`len("")`, 0},
+		{`len("Hello World")`, 11},
+		{`len("Hello", "Hello")`, "wrong number of arguments, got=2, want=1"},
+		{`len(1)`, "arguments to 'len' is not supported, got=INTEGER"},
+	}
+
+	for _, tt := range tests {
+		evaluated := evalExpr(tt.input)
+
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		default:
+			errObj, ok := evaluated.(*object.Error)
+
+			if !ok {
+				t.Errorf("object is not *object.Error, got=%T (%+v)", evaluated, evaluated)
+				continue
+			}
+
+			if errObj.Message != tt.expected {
+				t.Fatalf("Error.Message is not %q, got=%q", expected, errObj.Message)
+			}
+
+		}
+
 	}
 }
 
