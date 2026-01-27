@@ -60,6 +60,7 @@ func TestNextTokenWithFunctionInput(t *testing.T) {
 	10 != 9;
 	"foobar"
 	"foo bar"
+	[2,3,4]
 	`
 
 	tests := []struct {
@@ -142,6 +143,13 @@ func TestNextTokenWithFunctionInput(t *testing.T) {
 		{token.SEMICOLON, ";"},
 		{token.STRING, "foobar"},
 		{token.STRING, "foo bar"},
+		{token.LCOL, "["},
+		{token.INT, "2"},
+		{token.COMMA, ","},
+		{token.INT, "3"},
+		{token.COMMA, ","},
+		{token.INT, "3"},
+		{token.RCOL, "]"},
 		{token.EOF, ""},
 	}
 

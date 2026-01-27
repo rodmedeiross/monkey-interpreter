@@ -124,6 +124,10 @@ func (l *Lexer) NextToken() *token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '[':
+		tok = newToken(token.LCOL, l.ch)
+	case ']':
+		tok = newToken(token.RCOL, l.ch)
 	case ':':
 		tok = newToken(token.DOUBLECOL, l.ch)
 	case '-':
