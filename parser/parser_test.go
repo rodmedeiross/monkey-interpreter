@@ -492,6 +492,39 @@ func TestParsingStringExpression(t *testing.T) {
 	}
 }
 
+func TestArrayExpression(t *testing.T) {
+	input := "[2, 2*2, true]"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	expression, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement, got=%T", program.Statements[0])
+	}
+
+	arrayExpression, ok := expression.Expression.(*ast.ArrayExpression)
+
+	if !ok {
+		t.Fatalf("expression.Expression is not *ast.ArrayExpression, got=%T", arrayExpression)
+	}
+
+	if len(arrayExpression.Values) != 3 {
+		t.Errorf("array.Values does not contain 3 values, got=%d", len(arrayExpression.Values))
+	}
+
+	testIntegerExpression(t, 2, arrayExpression.Values[0])
+	testInfixExpression(t, "*", 2, 2, arrayExpression.Values[1])
+	testBooleanExpression(t, true, arrayExpression.Values[2])
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 

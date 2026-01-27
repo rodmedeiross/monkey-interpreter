@@ -68,6 +68,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.addPrefixFn(token.IF, p.parseIfExpression)
 	p.addPrefixFn(token.FUNCTION, p.parseFunctionExpression)
 	p.addPrefixFn(token.STRING, p.parseStringExpression)
+	p.addPrefixFn(token.LCOL, p.parseArrayExpression)
 
 	p.addInfixFn(token.EQ, p.parseInfix)
 	p.addInfixFn(token.NOT_EQ, p.parseInfix)
@@ -255,29 +256,58 @@ func (p *Parser) parseFunctionExpression() ast.Expression {
 	return funcExpress
 }
 
+func (p *Parser) parseArrayExpression() ast.Expression {
+	defer untrace(trace("parseArrayExpression"))
+
+	arrayExpress := &ast.ArrayExpression{
+		Token: *p.currToken,
+	}
+
+	arrayExpress.Values = p.parseSequencialValues(token.RCOL)
+
+	return arrayExpress
+}
+
 func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	defer untrace(trace("parseFunctionParameters"))
-	parameters := []*ast.Identifier{}
+	values := p.parseSequencialValues(token.RPAREN)
+
+	identifiers := []*ast.Identifier{}
+
+	for _, v := range values {
+		ident, ok := v.(*ast.Identifier)
+		if !ok {
+			p.errors = append(p.errors, fmt.Sprintf("expected *ast.Identifier for function parameters, got=%T (%+v)", v, v))
+			return nil
+		}
+		identifiers = append(identifiers, ident)
+
+	}
+	return identifiers
+}
+
+func (p *Parser) parseSequencialValues(end token.TokenType) []ast.Expression {
+	values := []ast.Expression{}
 
 	if p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
-		return parameters
+		return values
 	}
 
 	p.nextToken()
-	parameters = append(parameters, p.parseIdentifier().(*ast.Identifier))
+	values = append(values, p.parseExpression(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		parameters = append(parameters, p.parseIdentifier().(*ast.Identifier))
+		values = append(values, p.parseExpression(LOWEST))
 	}
 
-	if !p.expectedToken(token.RPAREN) {
+	if !p.expectedToken(end) {
 		return nil
 	}
 
-	return parameters
+	return values
 }
 
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
