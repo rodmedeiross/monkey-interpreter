@@ -229,6 +229,8 @@ func TestParsingOperatorPrecedence(t *testing.T) {
 		{"-(5 + 5)", "(-(5 + 5))"},
 		{"!(true == true)", "(!(true == true))"},
 		{"add(true == true, fn(x,y){x+y;}, x)", "add((true == true), fn(x, y) (x + y), x)"},
+		{"a * [1,2,3,4][b + c] * d", "((a * ([1, 2, 3, 4][(b + c)])) * d)"},
+		{"add(a * b[2], b[1], 2 * [1,2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"},
 	}
 
 	for _, tt := range tests {
@@ -523,6 +525,28 @@ func TestArrayExpression(t *testing.T) {
 	testIntegerExpression(t, 2, arrayExpression.Values[0])
 	testInfixExpression(t, "*", 2, 2, arrayExpression.Values[1])
 	testBooleanExpression(t, true, arrayExpression.Values[2])
+}
+
+func TestArrayIndexExpression(t *testing.T) {
+	input := "myArr[2*2]"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	arrayIdxExpression, ok := program.Statements[0].(*ast.ExpressionStatement).Expression.(*ast.ArrayIndexExpression)
+
+	if !ok {
+		t.Fatalf("expression.Expression is not *ast.ArrayIndexExpression, got=%T", arrayIdxExpression)
+	}
+
+	testIdentifierExpression(t, "myArr", arrayIdxExpression.Left)
+	testInfixExpression(t, "*", 2, 2, arrayIdxExpression.Index)
 }
 
 func checkParserErros(t *testing.T, parser *Parser) {

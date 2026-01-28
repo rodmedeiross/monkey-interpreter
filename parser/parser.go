@@ -18,6 +18,7 @@ const (
 	PRODUCT     // * /
 	PREFIX      // !X ++X
 	CALL        // X(X)
+	INDEX
 )
 
 type (
@@ -37,6 +38,7 @@ var precedence = map[token.TokenType]int{
 	token.ASTERISK: PRODUCT,
 	token.SLASH:    PRODUCT,
 	token.LPAREN:   CALL,
+	token.LCOL:     INDEX,
 }
 
 type Parser struct {
@@ -82,6 +84,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.addInfixFn(token.SLASH, p.parseInfix)
 	p.addInfixFn(token.STRING, p.parseInfix)
 	p.addInfixFn(token.LPAREN, p.parseFunctionCall)
+	p.addInfixFn(token.LCOL, p.parseArrayIndexExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -335,35 +338,28 @@ func (p *Parser) parseFunctionCall(function ast.Expression) ast.Expression {
 		Function: function,
 	}
 
-	call.FunctionCallParameters = p.parseFunctionCallParameters()
+	call.FunctionCallParameters = p.parseSequencialValues(token.RPAREN)
 
 	return call
 }
 
-func (p *Parser) parseFunctionCallParameters() []ast.Expression {
-	defer untrace(trace("parseFunctionCallParameters"))
-	parameters := []ast.Expression{}
+func (p *Parser) parseArrayIndexExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseArrayExpression"))
 
-	if p.peekTokenIs(token.RPAREN) {
-		p.nextToken()
-		return parameters
+	arrayIdx := &ast.ArrayIndexExpression{
+		Token: *p.currToken,
+		Left:  left,
 	}
 
 	p.nextToken()
 
-	parameters = append(parameters, p.parseExpression(LOWEST))
+	arrayIdx.Index = p.parseExpression(LOWEST)
 
-	for p.peekTokenIs(token.COMMA) {
-		p.nextToken()
-		p.nextToken()
-		parameters = append(parameters, p.parseExpression(LOWEST))
-	}
-
-	if !p.expectedToken(token.RPAREN) {
+	if !p.expectedToken(token.RCOL) {
 		return nil
 	}
 
-	return parameters
+	return arrayIdx
 }
 
 func (p *Parser) ParserProgram() *ast.Program {
