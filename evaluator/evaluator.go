@@ -149,21 +149,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return fn
 		}
 
-		args := func(params []ast.Expression, env *object.Environment) []object.Object {
-			objs := []object.Object{}
-
-			for _, param := range params {
-				evaluated := Eval(param, env)
-				if isError(evaluated) {
-					return []object.Object{evaluated}
-				}
-
-				objs = append(objs, evaluated)
-			}
-
-			return objs
-
-		}(node.FunctionCallParameters, env)
+		args := evalExpressions(node.FunctionCallParameters, env)
 
 		if len(args) == 1 && isError(args[0]) {
 			return args[0]
@@ -243,6 +229,16 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			}
 
 		}(node)
+
+	case *ast.ArrayExpression:
+		elems := evalExpressions(node.Values, env)
+		if len(elems) == 1 && isError(elems[0]) {
+			return elems[0]
+		}
+
+		return &object.Array{
+			Elements: elems,
+		}
 	}
 
 	return nil
@@ -259,6 +255,21 @@ func truely(cond object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func evalExpressions(params []ast.Expression, env *object.Environment) []object.Object {
+	objs := []object.Object{}
+
+	for _, param := range params {
+		evaluated := Eval(param, env)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+
+		objs = append(objs, evaluated)
+	}
+
+	return objs
 }
 
 func evalInfixExpression(operator string, left, right object.Object) object.Object {

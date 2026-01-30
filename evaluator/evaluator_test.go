@@ -296,6 +296,26 @@ func TestLenBuiltFunction(t *testing.T) {
 	}
 }
 
+func TestArrayExpression(t *testing.T) {
+	input := "[2+4, 4, 10-1]"
+
+	evaluated := evalExpr(input)
+
+	arr, ok := evaluated.(*object.Array)
+
+	if !ok {
+		t.Errorf("evaluated is not *object.Array, got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if arr.Inspect() != "[6, 4, 9]" {
+		t.Errorf("Array evaluated is not %q, got=%q", "[6, 4, 9]", arr.Inspect())
+	}
+
+	testIntegerObject(t, arr.Elements[0], 6)
+	testIntegerObject(t, arr.Elements[1], 4)
+	testIntegerObject(t, arr.Elements[2], 9)
+}
+
 func evalExpr(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
