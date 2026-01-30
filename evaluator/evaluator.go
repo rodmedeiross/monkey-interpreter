@@ -239,9 +239,41 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Array{
 			Elements: elems,
 		}
+
+	case *ast.ArrayIndexExpression:
+		arr := Eval(node.Left, env)
+
+		if isError(arr) {
+			return arr
+		}
+
+		index := Eval(node.Index, env)
+
+		if isError(index) {
+			return index
+		}
+
+		return evalIndexExpression(arr, index)
 	}
 
 	return nil
+}
+
+func evalIndexExpression(left, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.ARRAY_OBJ && right.Type() == object.INTEGER_OBJ:
+		arrObj := left.(*object.Array)
+		idx := right.(*object.Integer).Value
+		max := int64(len(arrObj.Elements) - 1)
+
+		if idx < 0 || idx > max {
+			return NULL
+		}
+
+		return arrObj.Elements[idx]
+	default:
+		return setError("index operation not supported, got=%s", left.Type())
+	}
 }
 
 func truely(cond object.Object) bool {
