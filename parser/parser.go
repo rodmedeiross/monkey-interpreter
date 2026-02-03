@@ -292,7 +292,7 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 func (p *Parser) parseSequencialValues(end token.TokenType) []ast.Expression {
 	values := []ast.Expression{}
 
-	if p.peekTokenIs(token.RPAREN) {
+	if p.peekTokenIs(end) {
 		p.nextToken()
 		return values
 	}

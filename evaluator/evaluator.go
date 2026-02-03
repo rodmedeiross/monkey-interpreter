@@ -25,10 +25,75 @@ var builtInFunctions = map[string]*object.BuiltIn{
 			switch arg := args[0].(type) {
 			case *object.String:
 				return &object.Integer{Value: int64(len(arg.Value))}
+			case *object.Array:
+				return &object.Integer{Value: int64(len(arg.Elements))}
 			default:
-				return setError("arguments to 'len' is not supported, got=%s", arg.Type())
+				return setError("argument to 'len' is not supported, got=%s", arg.Type())
 			}
 
+		},
+	},
+	"first": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return setError("wrong number of arguments, got=%d, want=1", len(args))
+			}
+
+			if args[0].Type() != object.ARRAY_OBJ {
+				return setError("argument to 'first' is not supported, got=%s", args[0].Type())
+			}
+
+			arr := args[0].(*object.Array).Elements
+
+			if len(arr) > 0 {
+				return arr[0]
+			}
+
+			return NULL
+		},
+	},
+	"rest": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return setError("wrong number of arguments, got=%d, want=1", len(args))
+			}
+
+			if args[0].Type() != object.ARRAY_OBJ {
+				return setError("argument to 'rest' is not supported, got=%s", args[0].Type())
+			}
+
+			arr := args[0].(*object.Array).Elements
+
+			if l := len(arr); l > 0 {
+				return &object.Array{
+					Elements: arr[1:l],
+				}
+			}
+
+			return NULL
+		},
+	},
+	"push": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return setError("wrong number of arguments, got=%d, want=2", len(args))
+			}
+
+			if args[0].Type() != object.ARRAY_OBJ {
+				return setError("argument to 'push' is not supported, got=%s", args[0].Type())
+			}
+
+			arr := args[0].(*object.Array).Elements
+
+			l := len(arr)
+
+			newElements := make([]object.Object, l+1)
+			copy(newElements, arr)
+			newElements[l] = args[1]
+
+			return &object.Array{
+				Elements: newElements,
+			}
 		},
 	},
 }
