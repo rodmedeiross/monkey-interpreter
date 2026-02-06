@@ -146,13 +146,13 @@ func (l *Lexer) NextToken() *token.Token {
 		if l.peekChar() == '=' {
 			tok = l.makeTwoCharToken()
 		} else {
-			tok = newToken(token.LT_EQ, l.ch)
+			tok = newToken(token.LT, l.ch)
 		}
 	case '>':
 		if l.peekChar() == '=' {
 			tok = l.makeTwoCharToken()
 		} else {
-			tok = newToken(token.GT_EQ, l.ch)
+			tok = newToken(token.GT, l.ch)
 		}
 	case '#':
 		tok = newToken(token.HASH, l.ch)

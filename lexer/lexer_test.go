@@ -61,6 +61,7 @@ func TestNextTokenWithFunctionInput(t *testing.T) {
 	"foobar"
 	"foo bar"
 	[2,3,4]
+	{"test": 3}
 	`
 
 	tests := []struct {
@@ -148,8 +149,13 @@ func TestNextTokenWithFunctionInput(t *testing.T) {
 		{token.COMMA, ","},
 		{token.INT, "3"},
 		{token.COMMA, ","},
-		{token.INT, "3"},
+		{token.INT, "4"},
 		{token.RCOL, "]"},
+		{token.LBRACE, "{"},
+		{token.STRING, "test"},
+		{token.DOUBLECOL, ":"},
+		{token.INT, "3"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 

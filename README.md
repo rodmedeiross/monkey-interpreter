@@ -5,10 +5,12 @@
   Yet Another Interpreter of Monkey Language in GO <img src="https://interpreterbook.com/img/monkey_logo-d5171d15.png" width="35" />!
 </h1>
 
-_A Mokey Language interpreter based on the book "Writing An Interpreter In Go - Ball, Thorsten"_
+_A Programming Language interpreter based on the book "Writing An Interpreter In Go - Ball, Thorsten"_
 
 ## 🚀 About the book
+
 - **[Writing An Interpreter In Go](https://interpreterbook.com).**
 
 ## :coffee: Credits
+
 ##### Images by [Marcus Olsson](https://github.com/marcusolsson)

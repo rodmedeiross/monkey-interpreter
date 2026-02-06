@@ -71,6 +71,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.addPrefixFn(token.FUNCTION, p.parseFunctionExpression)
 	p.addPrefixFn(token.STRING, p.parseStringExpression)
 	p.addPrefixFn(token.LCOL, p.parseArrayExpression)
+	p.addPrefixFn(token.LBRACE, p.parseHashExpression)
 
 	p.addInfixFn(token.EQ, p.parseInfix)
 	p.addInfixFn(token.NOT_EQ, p.parseInfix)
@@ -360,6 +361,46 @@ func (p *Parser) parseArrayIndexExpression(left ast.Expression) ast.Expression {
 	}
 
 	return arrayIdx
+}
+
+func (p *Parser) parseHashExpression() ast.Expression {
+	defer untrace(trace("parseHashExpression"))
+
+	hash := &ast.HashExpression{
+		Token: *p.currToken,
+		Pairs: map[ast.Expression]ast.Expression{},
+	}
+
+	if p.peekTokenIs(token.RBRACE) {
+		p.nextToken()
+		return hash
+	}
+
+	for !p.peekTokenIs(token.RBRACE) {
+		p.nextToken()
+
+		key := p.parseExpression(LOWEST)
+
+		if !p.expectedToken(token.DOUBLECOL) {
+			return nil
+		}
+
+		p.nextToken()
+
+		value := p.parseExpression(LOWEST)
+
+		hash.Pairs[key] = value
+
+		if !p.peekTokenIs(token.RBRACE) && !p.expectedToken(token.COMMA) {
+			return nil
+		}
+	}
+
+	if !p.expectedToken(token.RBRACE) {
+		return nil
+	}
+
+	return hash
 }
 
 func (p *Parser) ParserProgram() *ast.Program {

@@ -549,6 +549,129 @@ func TestArrayIndexExpression(t *testing.T) {
 	testInfixExpression(t, "*", 2, 2, arrayIdxExpression.Index)
 }
 
+func TestHashExpression(t *testing.T) {
+	input := `{"test": 1, "test2": 2, "test3": 3}`
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	express := program.Statements[0].(*ast.ExpressionStatement)
+
+	hashExpress, ok := express.Expression.(*ast.HashExpression)
+
+	if !ok {
+		t.Fatalf("expression.Expression is not *ast.HashExpression, got=%T", express.Expression)
+	}
+
+	if len(hashExpress.Pairs) != 3 {
+		t.Fatalf("hashExpress.Pairs does not contain 3 items, got=%d", len(hashExpress.Pairs))
+	}
+
+	expected := map[string]int64{
+		"test":  1,
+		"test2": 2,
+		"test3": 3,
+	}
+
+	for k, v := range hashExpress.Pairs {
+		lit, ok := k.(*ast.StringExpression)
+
+		if !ok {
+			t.Errorf("key is not an *ast.StringExpression, got=%T", k)
+		}
+
+		vtt := expected[lit.String()]
+
+		testIntegerExpression(t, vtt, v)
+	}
+}
+
+func TestHashExpressionWithInfixExpression(t *testing.T) {
+	input := `{"one": 2 - 1, "two": 2 * 1, "three": 1 + 2}`
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	express := program.Statements[0].(*ast.ExpressionStatement)
+
+	hashExpress, ok := express.Expression.(*ast.HashExpression)
+
+	if !ok {
+		t.Fatalf("expression.Expression is not *ast.HashExpression, got=%T", express.Expression)
+	}
+
+	if len(hashExpress.Pairs) != 3 {
+		t.Fatalf("hashExpress.Pairs does not contain 3 items, got=%d", len(hashExpress.Pairs))
+	}
+
+	infix := map[string]func(ast.Expression){
+		"one": func(ex ast.Expression) {
+			testInfixExpression(t, "-", 2, 1, ex)
+		},
+		"two": func(ex ast.Expression) {
+			testInfixExpression(t, "*", 2, 1, ex)
+		},
+		"three": func(ex ast.Expression) {
+			testInfixExpression(t, "+", 1, 2, ex)
+		},
+	}
+
+	for k, v := range hashExpress.Pairs {
+		lit, ok := k.(*ast.StringExpression)
+
+		if !ok {
+			t.Errorf("key is not an *ast.StringExpression, got=%T", k)
+			continue
+		}
+
+		f, ok := infix[lit.String()]
+
+		if !ok {
+			t.Errorf("No test function for key %q found", lit.String())
+			continue
+		}
+
+		f(v)
+	}
+}
+
+func TestHashExpressionEmpty(t *testing.T) {
+	input := `{}`
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParserProgram()
+	checkParserErros(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
+	}
+
+	express := program.Statements[0].(*ast.ExpressionStatement)
+
+	hashExpress, ok := express.Expression.(*ast.HashExpression)
+
+	if !ok {
+		t.Fatalf("expression.Expression is not *ast.HashExpression, got=%T", express.Expression)
+	}
+
+	if len(hashExpress.Pairs) != 0 {
+		t.Errorf("hashExpress has wrong length. got=%d", len(hashExpress.Pairs))
+	}
+}
+
 func checkParserErros(t *testing.T, parser *Parser) {
 	errs := parser.Errors()
 
@@ -607,13 +730,13 @@ func testIntegerExpression(t *testing.T, testIntegerValue int64, expression ast.
 	}
 
 	if integer.Value != testIntegerValue {
-		t.Errorf("identifier.Value is not %d, got=%q", testIntegerValue, integer.Value)
+		t.Errorf("integer.Value is not %d, got=%d", testIntegerValue, integer.Value)
 		return false
 
 	}
 
 	if integer.TokenLiteral() != fmt.Sprintf("%d", testIntegerValue) {
-		t.Errorf("identifier.Value is not %q, got=%q", fmt.Sprintf("%d", testIntegerValue), integer.TokenLiteral())
+		t.Errorf("integer.Value is not %q, got=%q", fmt.Sprintf("%d", testIntegerValue), integer.TokenLiteral())
 		return false
 	}
 
