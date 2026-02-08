@@ -99,7 +99,7 @@ func (l *Lexer) makeTwoCharToken() *token.Token {
 }
 
 func (l *Lexer) NextToken() *token.Token {
-	tok := &token.Token{}
+	tok := new(token.Token)
 
 	l.skipWhitespace()
 
