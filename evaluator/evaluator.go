@@ -319,6 +319,42 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return evalIndexExpression(arr, index)
+
+	case *ast.HashExpression:
+		hash := &object.HashObject{
+			Value: map[object.HashSet]object.HashValue{},
+		}
+
+		for k, v := range node.Pairs {
+			k_obj := Eval(k, env)
+
+			if isError(k_obj) {
+				return k_obj
+			}
+
+			v_obj := Eval(v, env)
+
+			if isError(v_obj) {
+				return v_obj
+			}
+
+			hk_obj, ok := k_obj.(object.Hashable)
+
+			if !ok {
+				return setError("key is not a Hashable object, got=%q", k_obj.Type())
+			}
+
+			if _, ok := hash.Value[hk_obj.Hash()]; ok {
+				return setError("key %q exists in hash, got=%q: %v", k_obj.Inspect(), k_obj.Inspect(), v_obj.Inspect())
+			}
+
+			hash.Value[hk_obj.Hash()] = object.HashValue{
+				Key:   k_obj,
+				Value: v_obj,
+			}
+		}
+
+		return hash
 	}
 
 	return nil

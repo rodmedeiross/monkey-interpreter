@@ -270,7 +270,7 @@ func TestLenBuiltFunction(t *testing.T) {
 		{`len("")`, 0},
 		{`len("Hello World")`, 11},
 		{`len("Hello", "Hello")`, "wrong number of arguments, got=2, want=1"},
-		{`len(1)`, "arguments to 'len' is not supported, got=INTEGER"},
+		{`len(1)`, "argument to 'len' is not supported, got=INTEGER"},
 	}
 
 	for _, tt := range tests {
@@ -304,7 +304,7 @@ func TestArrayExpression(t *testing.T) {
 	arr, ok := evaluated.(*object.Array)
 
 	if !ok {
-		t.Errorf("evaluated is not *object.Array, got=%T (%+v)", evaluated, evaluated)
+		t.Errorf("evaluated is not *object.Array, got=%T(%+v)", evaluated, evaluated)
 	}
 
 	if arr.Inspect() != "[6, 4, 9]" {
@@ -316,17 +316,17 @@ func TestArrayExpression(t *testing.T) {
 	testIntegerObject(t, arr.Elements[2], 9)
 }
 
-func TesteArrayIndexExpressions(t *testing.T) {
+func TestArrayIndexExpressions(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected interface{}
+		expected any
 	}{
 		{"[1, 2, 3][0]", 1},
 		{"[1, 2, 3][1]", 2},
 		{"[1, 2, 3][2]", 3},
-		{"let i = 0; [1][i];", 0},
+		{"let i = 0; [1][i];", 1},
 		{"[1, 2, 3][1 + 1]", 3},
-		{"let arr = [1, 2, 3]; arr[2];", 0},
+		{"let arr = [1, 2, 3]; arr[2];", 3},
 		{"let arr = [[1,2,3],[3,2,3]]; arr[0][1]", 2},
 		{"[1, 2, 3][3]", nil},
 	}
@@ -340,6 +340,49 @@ func TesteArrayIndexExpressions(t *testing.T) {
 		} else {
 			testNullObject(t, evaluated)
 		}
+	}
+}
+
+func TestHashObjectExpression(t *testing.T) {
+	input := `let two = "two";
+	{
+		   "one": 10 - 9,
+		   two: 1 + 1,
+		   "thr" + "ee": 6 / 2,
+		   4: 4,
+		   true: 5,
+		   false: 6
+	}`
+
+	evaluated := evalExpr(input)
+	hash, ok := evaluated.(*object.HashObject)
+
+	if !ok {
+		t.Fatalf("evalutated is not *object.HashObject, got=%T(%+v)", evaluated, evaluated)
+	}
+
+	expected := map[object.HashSet]int64{
+		(&object.String{Value: "one"}).Hash():     1,
+		(&object.String{Value: "two"}).Hash():     2,
+		(&object.String{Value: "three"}).Hash():   3,
+		(&object.Integer{Value: int64(4)}).Hash(): 4,
+		TRUE.Hash():  5,
+		FALSE.Hash(): 6,
+	}
+
+	if len(hash.Value) != len(expected) {
+		t.Fatalf("invalid number of elements in map, expected=%d, got=%d", len(expected), len(hash.Value))
+	}
+
+	for k, v := range expected {
+		hashValue, ok := hash.Value[k]
+
+		if !ok {
+			t.Errorf("value not found with key %q", k)
+			continue
+		}
+
+		testIntegerObject(t, hashValue.Value, v)
 	}
 }
 
