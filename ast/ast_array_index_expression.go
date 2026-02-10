@@ -6,15 +6,15 @@ import (
 	"github.com/rodmedeiross/monkey-interpreter/token"
 )
 
-type ArrayIndexExpression struct {
+type IndexExpression struct {
 	Token token.Token
 	Left  Expression
 	Index Expression
 }
 
-func (ai *ArrayIndexExpression) expressionNode()      {}
-func (ai *ArrayIndexExpression) TokenLiteral() string { return ai.Token.Literal }
-func (ai *ArrayIndexExpression) String() string {
+func (ai *IndexExpression) expressionNode()      {}
+func (ai *IndexExpression) TokenLiteral() string { return ai.Token.Literal }
+func (ai *IndexExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")

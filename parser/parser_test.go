@@ -539,10 +539,10 @@ func TestArrayIndexExpression(t *testing.T) {
 		t.Errorf("pragram.Statements does not contain 1 statement, got=%d", len(program.Statements))
 	}
 
-	arrayIdxExpression, ok := program.Statements[0].(*ast.ExpressionStatement).Expression.(*ast.ArrayIndexExpression)
+	arrayIdxExpression, ok := program.Statements[0].(*ast.ExpressionStatement).Expression.(*ast.IndexExpression)
 
 	if !ok {
-		t.Fatalf("expression.Expression is not *ast.ArrayIndexExpression, got=%T", arrayIdxExpression)
+		t.Fatalf("expression.Expression is not *ast.IndexExpression, got=%T", arrayIdxExpression)
 	}
 
 	testIdentifierExpression(t, "myArr", arrayIdxExpression.Left)

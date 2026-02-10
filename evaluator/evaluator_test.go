@@ -150,6 +150,8 @@ func TestErrorEvaluation(t *testing.T) {
 		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
 		{"if (10 > 1) { if (10 > 1) { return true + false; } return 1; }", "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
+		{`{"test":2}[fn(x){x}]`, "index hash not supported, got=FUNCTION"},
+		{`{fn(x){x}:2}`, "key is not a Hashable object, got=FUNCTION"},
 	}
 
 	for _, tt := range test {
@@ -383,6 +385,53 @@ func TestHashObjectExpression(t *testing.T) {
 		}
 
 		testIntegerObject(t, hashValue.Value, v)
+	}
+}
+
+func TestHashIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{
+			`{"foo": 5}["foo"]`,
+			5,
+		},
+		{
+			`{"foo": 5}["bar"]`,
+			nil,
+		},
+		{
+			`let key = "foo"; {"foo": 5}[key]`,
+			5,
+		},
+		{
+			`{}["foo"]`,
+			nil,
+		},
+		{
+			`{5: 5}[5]`,
+			5,
+		},
+		{
+			`{true: 5}[true]`,
+			5,
+		},
+		{
+			`{false: 5}[false]`,
+			5,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := evalExpr(tt.input)
+
+		switch ev := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(ev))
+		default:
+			testNullObject(t, evaluated)
+		}
 	}
 }
 

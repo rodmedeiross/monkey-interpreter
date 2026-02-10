@@ -305,11 +305,11 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			Elements: elems,
 		}
 
-	case *ast.ArrayIndexExpression:
-		arr := Eval(node.Left, env)
+	case *ast.IndexExpression:
+		expr := Eval(node.Left, env)
 
-		if isError(arr) {
-			return arr
+		if isError(expr) {
+			return expr
 		}
 
 		index := Eval(node.Index, env)
@@ -318,7 +318,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return index
 		}
 
-		return evalIndexExpression(arr, index)
+		return evalIndexExpression(expr, index)
 
 	case *ast.HashExpression:
 		hash := &object.HashObject{
@@ -341,7 +341,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			hk_obj, ok := k_obj.(object.Hashable)
 
 			if !ok {
-				return setError("key is not a Hashable object, got=%q", k_obj.Type())
+				return setError("key is not a Hashable object, got=%s", k_obj.Type())
 			}
 
 			if _, ok := hash.Value[hk_obj.Hash()]; ok {
@@ -372,9 +372,27 @@ func evalIndexExpression(left, right object.Object) object.Object {
 		}
 
 		return arrObj.Elements[idx]
+	case left.Type() == object.HASH:
+		hash, ok := right.(object.Hashable)
+		if !ok {
+			return setError("index hash not supported, got=%s", right.Type())
+		}
+		hashValue := left.(*object.HashObject)
+		return evalHashIndexExpression(hashValue, hash)
+
 	default:
 		return setError("index operation not supported, got=%s", left.Type())
 	}
+}
+
+func evalHashIndexExpression(left *object.HashObject, index object.Hashable) object.Object {
+	valueObj, ok := left.Value[index.Hash()]
+
+	if !ok {
+		return NULL
+	}
+
+	return valueObj.Value
 }
 
 func truely(cond object.Object) bool {

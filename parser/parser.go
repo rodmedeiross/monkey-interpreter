@@ -85,7 +85,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.addInfixFn(token.SLASH, p.parseInfix)
 	p.addInfixFn(token.STRING, p.parseInfix)
 	p.addInfixFn(token.LPAREN, p.parseFunctionCall)
-	p.addInfixFn(token.LCOL, p.parseArrayIndexExpression)
+	p.addInfixFn(token.LCOL, p.parseIndexExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -344,23 +344,23 @@ func (p *Parser) parseFunctionCall(function ast.Expression) ast.Expression {
 	return call
 }
 
-func (p *Parser) parseArrayIndexExpression(left ast.Expression) ast.Expression {
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	defer untrace(trace("parseArrayExpression"))
 
-	arrayIdx := &ast.ArrayIndexExpression{
+	indexExpression := &ast.IndexExpression{
 		Token: *p.currToken,
 		Left:  left,
 	}
 
 	p.nextToken()
 
-	arrayIdx.Index = p.parseExpression(LOWEST)
+	indexExpression.Index = p.parseExpression(LOWEST)
 
 	if !p.expectedToken(token.RCOL) {
 		return nil
 	}
 
-	return arrayIdx
+	return indexExpression
 }
 
 func (p *Parser) parseHashExpression() ast.Expression {
