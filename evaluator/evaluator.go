@@ -96,6 +96,15 @@ var builtInFunctions = map[string]*object.BuiltIn{
 			}
 		},
 	},
+	"puts": {
+		Fn: func(args ...object.Object) object.Object {
+			for _, v := range args {
+				fmt.Println(v.Inspect())
+			}
+
+			return NULL
+		},
+	},
 }
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
